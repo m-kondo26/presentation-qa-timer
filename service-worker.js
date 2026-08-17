@@ -1,4 +1,4 @@
-const CACHE_NAME = "presentation-timer-v2";
+const CACHE_NAME = "presentation-timer-v3";
 const ASSETS = [
   "./",
   "./index.html",

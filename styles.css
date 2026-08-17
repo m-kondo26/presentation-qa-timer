@@ -59,6 +59,22 @@ input:focus-visible {
   outline-offset: 3px;
 }
 
+.language-button {
+  position: fixed;
+  z-index: 10;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  min-width: 92px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--accent-strong);
+  box-shadow: 0 6px 18px rgba(22, 45, 38, 0.1);
+  font-weight: 800;
+}
+
 .app-shell {
   min-height: 100dvh;
   display: grid;

@@ -1,8 +1,32 @@
 const STORAGE_KEY = "presentation-timer-settings-v1";
 
+const translations = {
+  ja: {
+    documentTitle: "発表・質疑カウントダウン", languageButton: "English", languageButtonLabel: "Switch to English",
+    appLabel: "iPad 発表タイマー", setupTitle: "発表時間と質疑応答を設定", setupDescription: "開始後は残り時間を大きく表示します。",
+    durationSettings: "時間設定", presentationTime: "発表時間", qaTime: "質疑応答", minuteSuffix: "分",
+    presentationStepper: "発表時間を1分単位で変更", decreasePresentation: "発表時間を1分短くする", presentationMinutes: "発表時間（分）", increasePresentation: "発表時間を1分長くする",
+    qaStepper: "質疑応答を1分単位で変更", decreaseQa: "質疑応答を1分短くする", qaMinutes: "質疑応答（分）", increaseQa: "質疑応答を1分長くする",
+    start: "スタート", testBell: "ベル確認", configuredTimes: "設定時間", presentationSummary: "分 発表", qaSummary: "分 質疑", remainingTime: "残り時間",
+    presenting: "発表中", presentationTitle: "発表時間", presentationMessage: "発表の残り時間です。", qaActive: "質疑応答中", qaTitle: "質疑応答", qaMessage: "質疑応答の残り時間です。",
+    pause: "一時停止", resume: "再開", toQa: "質疑へ", toEnd: "終了へ", reset: "リセット", finishedLabel: "終了", finishedTitle: "発表と質疑応答が終了しました", nextSpeaker: "次の演者を開始",
+  },
+  en: {
+    documentTitle: "Presentation & Q&A Countdown", languageButton: "日本語", languageButtonLabel: "日本語に切り替える",
+    appLabel: "iPad Presentation Timer", setupTitle: "Set presentation and Q&A times", setupDescription: "The remaining time will be shown prominently after you start.",
+    durationSettings: "Time settings", presentationTime: "Presentation", qaTime: "Q&A", minuteSuffix: " min",
+    presentationStepper: "Adjust presentation time in one-minute increments", decreasePresentation: "Decrease presentation time by one minute", presentationMinutes: "Presentation time in minutes", increasePresentation: "Increase presentation time by one minute",
+    qaStepper: "Adjust Q&A time in one-minute increments", decreaseQa: "Decrease Q&A time by one minute", qaMinutes: "Q&A time in minutes", increaseQa: "Increase Q&A time by one minute",
+    start: "Start", testBell: "Test Bell", configuredTimes: "Configured times", presentationSummary: " min Presentation", qaSummary: " min Q&A", remainingTime: "Time remaining",
+    presenting: "PRESENTING", presentationTitle: "Presentation", presentationMessage: "Presentation time remaining.", qaActive: "Q&A IN PROGRESS", qaTitle: "Q&A", qaMessage: "Q&A time remaining.",
+    pause: "Pause", resume: "Resume", toQa: "Go to Q&A", toEnd: "Finish", reset: "Reset", finishedLabel: "FINISHED", finishedTitle: "Presentation and Q&A completed", nextSpeaker: "Start Next Speaker",
+  },
+};
+
 const state = {
   presentationMinutes: 7,
   qaMinutes: 3,
+  language: "ja",
   phase: "setup",
   isPaused: false,
   phaseStartedAt: 0,
@@ -36,7 +60,12 @@ const el = {
   summaryQa: document.getElementById("summaryQa"),
   nextSpeakerButton: document.getElementById("nextSpeakerButton"),
   resetButton: document.getElementById("resetButton"),
+  languageButton: document.getElementById("languageButton"),
 };
+
+function text(key) {
+  return translations[state.language][key];
+}
 
 function clampMinutes(value) {
   const parsed = Number.parseInt(value, 10);
@@ -57,6 +86,7 @@ function loadSettings() {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
     state.presentationMinutes = clampMinutes(saved.presentationMinutes ?? state.presentationMinutes);
     state.qaMinutes = clampMinutes(saved.qaMinutes ?? state.qaMinutes);
+    state.language = saved.language === "en" ? "en" : "ja";
   } catch {
     saveSettings();
   }
@@ -68,8 +98,30 @@ function saveSettings() {
     JSON.stringify({
       presentationMinutes: state.presentationMinutes,
       qaMinutes: state.qaMinutes,
+      language: state.language,
     }),
   );
+}
+
+function renderLanguage() {
+  document.documentElement.lang = state.language;
+  document.title = text("documentTitle");
+  document.querySelector('meta[name="apple-mobile-web-app-title"]').content = text("appLabel");
+  document.querySelectorAll("[data-i18n]").forEach((node) => {
+    node.textContent = text(node.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-aria]").forEach((node) => {
+    node.setAttribute("aria-label", text(node.dataset.i18nAria));
+  });
+  el.languageButton.textContent = text("languageButton");
+  el.languageButton.setAttribute("aria-label", text("languageButtonLabel"));
+  if (state.phase === "presentation" || state.phase === "qa") renderPhaseShell();
+}
+
+function toggleLanguage() {
+  state.language = state.language === "ja" ? "en" : "ja";
+  saveSettings();
+  renderLanguage();
 }
 
 function renderSettings() {
@@ -189,11 +241,11 @@ function startSession() {
 function renderPhaseShell() {
   const isQa = state.phase === "qa";
   document.body.classList.toggle("is-qa", isQa);
-  el.phaseEyebrow.textContent = isQa ? "質疑応答中" : "発表中";
-  el.phaseTitle.textContent = isQa ? "質疑応答" : "発表時間";
-  el.phaseMessage.textContent = isQa ? "質疑応答の残り時間です。" : "発表の残り時間です。";
-  el.skipButton.textContent = isQa ? "終了へ" : "質疑へ";
-  el.pauseButton.textContent = "一時停止";
+  el.phaseEyebrow.textContent = text(isQa ? "qaActive" : "presenting");
+  el.phaseTitle.textContent = text(isQa ? "qaTitle" : "presentationTitle");
+  el.phaseMessage.textContent = text(isQa ? "qaMessage" : "presentationMessage");
+  el.skipButton.textContent = text(isQa ? "toEnd" : "toQa");
+  el.pauseButton.textContent = text(state.isPaused ? "resume" : "pause");
 }
 
 function renderTimer(remainingMs) {
@@ -246,7 +298,7 @@ function pauseOrResume() {
   if (state.isPaused) {
     state.isPaused = false;
     state.phaseEndsAt = Date.now() + state.pausedRemainingMs;
-    el.pauseButton.textContent = "一時停止";
+    el.pauseButton.textContent = text("pause");
     requestWakeLock();
     tick();
     return;
@@ -255,7 +307,7 @@ function pauseOrResume() {
   state.pausedRemainingMs = Math.max(0, state.phaseEndsAt - Date.now());
   state.isPaused = true;
   clearTick();
-  el.pauseButton.textContent = "再開";
+  el.pauseButton.textContent = text("resume");
   releaseWakeLock();
   renderTimer(state.pausedRemainingMs);
 }
@@ -309,6 +361,7 @@ function bindEvents() {
   el.resetDuringButton.addEventListener("click", resetToSetup);
   el.resetButton.addEventListener("click", resetToSetup);
   el.nextSpeakerButton.addEventListener("click", startSession);
+  el.languageButton.addEventListener("click", toggleLanguage);
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && (state.phase === "presentation" || state.phase === "qa") && !state.isPaused) {
@@ -330,5 +383,6 @@ function registerServiceWorker() {
 
 loadSettings();
 renderSettings();
+renderLanguage();
 bindEvents();
 registerServiceWorker();

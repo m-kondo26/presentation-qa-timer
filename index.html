@@ -14,26 +14,27 @@
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
+    <button id="languageButton" type="button" class="language-button" aria-label="Switch to English">English</button>
     <main class="app-shell" aria-live="polite">
       <section id="setupPanel" class="setup-panel">
         <div class="setup-copy">
-          <p class="app-label">iPad 発表タイマー</p>
-          <h1>発表時間と質疑応答を設定</h1>
-          <p>開始後は残り時間を大きく表示します。</p>
+          <p class="app-label" data-i18n="appLabel">iPad 発表タイマー</p>
+          <h1 data-i18n="setupTitle">発表時間と質疑応答を設定</h1>
+          <p data-i18n="setupDescription">開始後は残り時間を大きく表示します。</p>
         </div>
 
-        <div class="duration-grid" aria-label="時間設定">
+        <div class="duration-grid" aria-label="時間設定" data-i18n-aria="durationSettings">
           <article class="duration-card">
             <div>
-              <span class="duration-label">発表時間</span>
-              <strong><span id="presentationValue">7</span>分</strong>
+              <span class="duration-label" data-i18n="presentationTime">発表時間</span>
+              <strong><span id="presentationValue">7</span><span data-i18n="minuteSuffix">分</span></strong>
             </div>
-            <div class="stepper" role="group" aria-label="発表時間を1分単位で変更">
-              <button type="button" class="icon-button" data-adjust="presentation" data-delta="-1" aria-label="発表時間を1分短くする">
+            <div class="stepper" role="group" aria-label="発表時間を1分単位で変更" data-i18n-aria="presentationStepper">
+              <button type="button" class="icon-button" data-adjust="presentation" data-delta="-1" aria-label="発表時間を1分短くする" data-i18n-aria="decreasePresentation">
                 <span aria-hidden="true">−</span>
               </button>
-              <input id="presentationInput" type="number" min="1" max="60" step="1" inputmode="numeric" value="7" aria-label="発表時間（分）" />
-              <button type="button" class="icon-button" data-adjust="presentation" data-delta="1" aria-label="発表時間を1分長くする">
+              <input id="presentationInput" type="number" min="1" max="60" step="1" inputmode="numeric" value="7" aria-label="発表時間（分）" data-i18n-aria="presentationMinutes" />
+              <button type="button" class="icon-button" data-adjust="presentation" data-delta="1" aria-label="発表時間を1分長くする" data-i18n-aria="increasePresentation">
                 <span aria-hidden="true">＋</span>
               </button>
             </div>
@@ -41,15 +42,15 @@
 
           <article class="duration-card">
             <div>
-              <span class="duration-label">質疑応答</span>
-              <strong><span id="qaValue">3</span>分</strong>
+              <span class="duration-label" data-i18n="qaTime">質疑応答</span>
+              <strong><span id="qaValue">3</span><span data-i18n="minuteSuffix">分</span></strong>
             </div>
-            <div class="stepper" role="group" aria-label="質疑応答を1分単位で変更">
-              <button type="button" class="icon-button" data-adjust="qa" data-delta="-1" aria-label="質疑応答を1分短くする">
+            <div class="stepper" role="group" aria-label="質疑応答を1分単位で変更" data-i18n-aria="qaStepper">
+              <button type="button" class="icon-button" data-adjust="qa" data-delta="-1" aria-label="質疑応答を1分短くする" data-i18n-aria="decreaseQa">
                 <span aria-hidden="true">−</span>
               </button>
-              <input id="qaInput" type="number" min="1" max="60" step="1" inputmode="numeric" value="3" aria-label="質疑応答（分）" />
-              <button type="button" class="icon-button" data-adjust="qa" data-delta="1" aria-label="質疑応答を1分長くする">
+              <input id="qaInput" type="number" min="1" max="60" step="1" inputmode="numeric" value="3" aria-label="質疑応答（分）" data-i18n-aria="qaMinutes" />
+              <button type="button" class="icon-button" data-adjust="qa" data-delta="1" aria-label="質疑応答を1分長くする" data-i18n-aria="increaseQa">
                 <span aria-hidden="true">＋</span>
               </button>
             </div>
@@ -57,8 +58,8 @@
         </div>
 
         <div class="setup-actions">
-          <button id="startButton" type="button" class="primary-button">スタート</button>
-          <button id="testBellButton" type="button" class="secondary-button">ベル確認</button>
+          <button id="startButton" type="button" class="primary-button" data-i18n="start">スタート</button>
+          <button id="testBellButton" type="button" class="secondary-button" data-i18n="testBell">ベル確認</button>
         </div>
       </section>
 
@@ -68,13 +69,13 @@
             <p id="phaseEyebrow" class="phase-eyebrow">発表中</p>
             <h2 id="phaseTitle">発表時間</h2>
           </div>
-          <div class="mini-summary" aria-label="設定時間">
-            <span><b id="summaryPresentation">7</b>分 発表</span>
-            <span><b id="summaryQa">3</b>分 質疑</span>
+          <div class="mini-summary" aria-label="設定時間" data-i18n-aria="configuredTimes">
+            <span><b id="summaryPresentation">7</b><span data-i18n="presentationSummary">分 発表</span></span>
+            <span><b id="summaryQa">3</b><span data-i18n="qaSummary">分 質疑</span></span>
           </div>
         </div>
 
-        <div class="time-stage" aria-label="残り時間">
+        <div class="time-stage" aria-label="残り時間" data-i18n-aria="remainingTime">
           <div id="timeDisplay" class="time-display" role="timer">07:00</div>
           <p id="phaseMessage" class="phase-message">発表者と司会に見えるよう大きく表示しています。</p>
         </div>
@@ -86,17 +87,17 @@
         <div class="timer-actions">
           <button id="pauseButton" type="button" class="secondary-button compact">一時停止</button>
           <button id="skipButton" type="button" class="secondary-button compact">質疑へ</button>
-          <button id="resetDuringButton" type="button" class="ghost-button compact">リセット</button>
+          <button id="resetDuringButton" type="button" class="ghost-button compact" data-i18n="reset">リセット</button>
         </div>
       </section>
 
       <section id="completePanel" class="complete-panel" hidden>
-        <p class="app-label">終了</p>
-        <h2>発表と質疑応答が終了しました</h2>
+        <p class="app-label" data-i18n="finishedLabel">終了</p>
+        <h2 data-i18n="finishedTitle">発表と質疑応答が終了しました</h2>
         <div class="complete-time">00:00</div>
         <div class="complete-actions">
-          <button id="nextSpeakerButton" type="button" class="primary-button">次の演者を開始</button>
-          <button id="resetButton" type="button" class="secondary-button">リセット</button>
+          <button id="nextSpeakerButton" type="button" class="primary-button" data-i18n="nextSpeaker">次の演者を開始</button>
+          <button id="resetButton" type="button" class="secondary-button" data-i18n="reset">リセット</button>
         </div>
       </section>
     </main>
