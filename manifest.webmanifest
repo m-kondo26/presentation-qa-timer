@@ -2,7 +2,7 @@
   "id": "./",
   "name": "発表・質疑カウントダウン",
   "short_name": "発表タイマー",
-  "description": "iPadで発表時間と質疑応答の残り時間を大きく表示するカウントダウンタイマーです。",
+  "description": "iPhoneとiPadで発表時間と質疑応答の残り時間を大きく表示するカウントダウンタイマーです。",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

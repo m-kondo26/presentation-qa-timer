@@ -1,15 +1,15 @@
 # 発表・質疑カウントダウン
 
-iPadで発表時間と質疑応答の残り時間を大きく表示する、静的HTMLのPWAです。
+iPhoneとiPadで発表時間と質疑応答の残り時間を大きく表示する、縦向き・横向き対応の静的HTML PWAです。
 
-## iPadでアプリのように使う方法
+## iPhone・iPadでアプリのように使う方法
 
 1. このフォルダの中身をHTTPS対応の静的ホスティングに公開します。
    - GitHub Pages
    - Cloudflare Pages
    - Netlify
    - Vercel
-2. iPadのSafariで公開URLを開きます。
+2. iPhoneまたはiPadのSafariで公開URLを開きます。
 3. 共有ボタンから「ホーム画面に追加」を選びます。
 4. ホーム画面に追加された「発表タイマー」アイコンから起動します。
 
