@@ -181,15 +181,19 @@ function renderSettings() {
   el.presentationSecondsInput.value = state.presentationSeconds;
   el.qaInput.value = state.qaMinutes;
   el.qaSecondsInput.value = state.qaSeconds;
+  renderDurationValues();
+  el.soundSelect.value = state.sound;
+  el.soundEnabledInput.checked = state.soundEnabled;
+  el.soundEnabledLabel.textContent = text(state.soundEnabled ? "soundOn" : "soundOff");
+}
+
+function renderDurationValues() {
   el.presentationValue.textContent = state.presentationMinutes;
   el.presentationSecondsValue.textContent = String(state.presentationSeconds).padStart(2, "0");
   el.qaValue.textContent = state.qaMinutes;
   el.qaSecondsValue.textContent = String(state.qaSeconds).padStart(2, "0");
   el.summaryPresentation.textContent = formatConfiguredPresentation();
   el.summaryQa.textContent = formatConfiguredQa();
-  el.soundSelect.value = state.sound;
-  el.soundEnabledInput.checked = state.soundEnabled;
-  el.soundEnabledLabel.textContent = text(state.soundEnabled ? "soundOn" : "soundOff");
 }
 
 function setPanel(panelName) {
@@ -401,7 +405,7 @@ function resetToSetup() {
   renderSettings();
 }
 
-function updateDuration(kind, value) {
+function updateDuration(kind, value, renderInputs = true) {
   if (kind === "presentation") {
     state.presentationMinutes = clampPresentationMinutes(value);
   } else if (kind === "presentationSeconds") {
@@ -414,7 +418,20 @@ function updateDuration(kind, value) {
   ensurePresentationDuration();
   ensureQaDuration();
   saveSettings();
-  renderSettings();
+  if (renderInputs) {
+    renderSettings();
+  } else {
+    renderDurationValues();
+  }
+}
+
+function handleDurationInput(kind, input) {
+  if (input.value === "") return;
+  updateDuration(kind, input.value, false);
+}
+
+function commitDurationInput(kind, input) {
+  updateDuration(kind, input.value === "" ? 0 : input.value);
 }
 
 function bindEvents() {
@@ -427,10 +444,16 @@ function bindEvents() {
     });
   });
 
-  el.presentationInput.addEventListener("input", () => updateDuration("presentation", el.presentationInput.value));
-  el.presentationSecondsInput.addEventListener("input", () => updateDuration("presentationSeconds", el.presentationSecondsInput.value));
-  el.qaInput.addEventListener("input", () => updateDuration("qa", el.qaInput.value));
-  el.qaSecondsInput.addEventListener("input", () => updateDuration("qaSeconds", el.qaSecondsInput.value));
+  [
+    ["presentation", el.presentationInput],
+    ["presentationSeconds", el.presentationSecondsInput],
+    ["qa", el.qaInput],
+    ["qaSeconds", el.qaSecondsInput],
+  ].forEach(([kind, input]) => {
+    input.addEventListener("input", () => handleDurationInput(kind, input));
+    input.addEventListener("change", () => commitDurationInput(kind, input));
+    input.addEventListener("blur", () => commitDurationInput(kind, input));
+  });
   el.startButton.addEventListener("click", startSession);
   el.testBellButton.addEventListener("click", () => ringBell("phase"));
   el.pauseButton.addEventListener("click", pauseOrResume);
@@ -461,7 +484,7 @@ function bindEvents() {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=9").catch(() => {
+    navigator.serviceWorker.register("./service-worker.js?v=10").catch(() => {
       // The app still works without offline caching when opened from a file URL.
     });
   });
