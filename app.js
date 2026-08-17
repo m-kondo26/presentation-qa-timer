@@ -484,9 +484,12 @@ function bindEvents() {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=10").catch(() => {
-      // The app still works without offline caching when opened from a file URL.
-    });
+    navigator.serviceWorker
+      .register("./service-worker.js?v=11")
+      .then((registration) => registration.update())
+      .catch(() => {
+        // The app still works without offline caching when opened from a file URL.
+      });
   });
 }
 
