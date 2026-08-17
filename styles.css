@@ -565,11 +565,11 @@ h1 {
 
   .setup-panel,
   .complete-panel {
-    padding: 20px;
+    padding: 16px;
   }
 
   .setup-panel {
-    gap: 18px;
+    gap: 12px;
   }
 
   .setup-copy {
@@ -581,8 +581,8 @@ h1 {
   }
 
   .duration-card {
-    gap: 14px;
-    padding: 16px;
+    gap: 10px;
+    padding: 12px;
   }
 
   .presentation-controls {
@@ -604,6 +604,38 @@ h1 {
   .stepper input {
     height: 48px;
   }
+
+  .sound-settings {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .sound-field,
+  .sound-toggle {
+    gap: 5px;
+    font-size: 0.82rem;
+  }
+
+  .sound-field select,
+  .toggle-control {
+    min-height: 44px;
+  }
+
+  .setup-actions {
+    flex-wrap: nowrap;
+  }
+
+  .setup-actions .primary-button,
+  .setup-actions .secondary-button {
+    width: auto;
+    min-width: 0;
+    flex: 1 1 50%;
+  }
+
+  .time-display {
+    font-size: clamp(6rem, 32vw, 9rem);
+  }
 }
 
 @media (orientation: landscape) and (max-height: 500px) {
@@ -618,7 +650,7 @@ h1 {
 
   .app-shell {
     min-height: 100dvh;
-    padding: 10px;
+    padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
   }
 
   .setup-panel {
