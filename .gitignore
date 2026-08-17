@@ -1,0 +1,4 @@
+output/
+tools/
+*.log
+*.tmp

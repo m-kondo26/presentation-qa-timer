@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="発表タイマー">
+  <rect width="512" height="512" rx="72" fill="#f7faf9"/>
+  <circle cx="256" cy="276" r="148" fill="#ffffff" stroke="#007a68" stroke-width="26"/>
+  <path d="M256 162v118l82 50" fill="none" stroke="#15211d" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M198 92h116" fill="none" stroke="#007a68" stroke-width="28" stroke-linecap="round"/>
+  <path d="M144 424h224" fill="none" stroke="#d47b00" stroke-width="28" stroke-linecap="round"/>
+</svg>
