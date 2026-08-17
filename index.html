@@ -11,7 +11,7 @@
     <link rel="icon" type="image/svg+xml" href="./assets/icon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/icon-180.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=6" />
+    <link rel="stylesheet" href="./styles.css?v=7" />
   </head>
   <body>
     <button id="languageButton" type="button" class="language-button" aria-label="Switch to English">English</button>
@@ -60,16 +60,33 @@
           <article class="duration-card">
             <div>
               <span class="duration-label" data-i18n="qaTime">質疑応答</span>
-              <strong><span id="qaValue">3</span><span data-i18n="minuteSuffix">分</span></strong>
+              <strong><span id="qaValue">3</span><span data-i18n="minuteSuffix">分</span> <span id="qaSecondsValue">00</span><span data-i18n="secondSuffix">秒</span></strong>
             </div>
-            <div class="stepper" role="group" aria-label="質疑応答を1分単位で変更" data-i18n-aria="qaStepper">
-              <button type="button" class="icon-button" data-adjust="qa" data-delta="-1" aria-label="質疑応答を1分短くする" data-i18n-aria="decreaseQa">
-                <span aria-hidden="true">−</span>
-              </button>
-              <input id="qaInput" type="number" min="1" max="60" step="1" inputmode="numeric" value="3" aria-label="質疑応答（分）" data-i18n-aria="qaMinutes" />
-              <button type="button" class="icon-button" data-adjust="qa" data-delta="1" aria-label="質疑応答を1分長くする" data-i18n-aria="increaseQa">
-                <span aria-hidden="true">＋</span>
-              </button>
+            <div class="presentation-controls">
+              <div class="time-unit-control">
+                <span data-i18n="minutesLabel">分</span>
+                <div class="stepper" role="group" aria-label="質疑応答時間の分を変更" data-i18n-aria="qaMinuteStepper">
+                  <button type="button" class="icon-button" data-adjust="qa" data-delta="-1" aria-label="質疑応答を1分短くする" data-i18n-aria="decreaseQa">
+                    <span aria-hidden="true">−</span>
+                  </button>
+                  <input id="qaInput" type="number" min="0" max="60" step="1" inputmode="numeric" value="3" aria-label="質疑応答（分）" data-i18n-aria="qaMinutes" />
+                  <button type="button" class="icon-button" data-adjust="qa" data-delta="1" aria-label="質疑応答を1分長くする" data-i18n-aria="increaseQa">
+                    <span aria-hidden="true">＋</span>
+                  </button>
+                </div>
+              </div>
+              <div class="time-unit-control">
+                <span data-i18n="secondsLabel">秒</span>
+                <div class="stepper" role="group" aria-label="質疑応答時間の秒を変更" data-i18n-aria="qaSecondStepper">
+                  <button type="button" class="icon-button" data-adjust="qaSeconds" data-delta="-1" aria-label="質疑応答を1秒短くする" data-i18n-aria="decreaseQaSecond">
+                    <span aria-hidden="true">−</span>
+                  </button>
+                  <input id="qaSecondsInput" type="number" min="0" max="59" step="1" inputmode="numeric" value="0" aria-label="質疑応答（秒）" data-i18n-aria="qaSeconds" />
+                  <button type="button" class="icon-button" data-adjust="qaSeconds" data-delta="1" aria-label="質疑応答を1秒長くする" data-i18n-aria="increaseQaSecond">
+                    <span aria-hidden="true">＋</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </article>
         </div>
@@ -106,7 +123,7 @@
           </div>
           <div class="mini-summary" aria-label="設定時間" data-i18n-aria="configuredTimes">
             <span><b id="summaryPresentation">07:00</b><span data-i18n="presentationSummary"> 発表</span></span>
-            <span><b id="summaryQa">3</b><span data-i18n="qaSummary">分 質疑</span></span>
+            <span><b id="summaryQa">03:00</b><span data-i18n="qaSummary"> 質疑</span></span>
           </div>
         </div>
 
@@ -137,6 +154,6 @@
       </section>
     </main>
 
-    <script src="./app.js?v=6" defer></script>
+    <script src="./app.js?v=7" defer></script>
   </body>
 </html>
