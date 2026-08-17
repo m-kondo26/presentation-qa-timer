@@ -259,9 +259,9 @@ function playChime(startTime, frequency) {
 
 function ringBell(kind = "phase") {
   const profiles = {
-    bell: { notes: [659, 784, 988], interval: 0.42, play: playBell },
-    chime: { notes: [784, 988, 1175], interval: 0.36, play: playChime },
-    beep: { notes: [880, 880, 1047], interval: 0.31, play: playBeep },
+    bell: { notes: [988, 784, 659], interval: 0.42, play: playBell },
+    chime: { notes: [1175, 988, 784], interval: 0.36, play: playChime },
+    beep: { notes: [1047, 880, 784], interval: 0.31, play: playBeep },
   };
   const profile = profiles[state.sound];
   const noteCount = kind === "final" ? 3 : 2;
@@ -511,7 +511,7 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./service-worker.js?v=16")
+      .register("./service-worker.js?v=17")
       .then((registration) => registration.update())
       .catch(() => {
         // The app still works without offline caching when opened from a file URL.
