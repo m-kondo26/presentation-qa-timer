@@ -30,7 +30,7 @@ const state = {
   presentationSeconds: 0,
   qaMinutes: 3,
   qaSeconds: 0,
-  language: "ja",
+  language: "en",
   sound: "beep",
   soundEnabled: true,
   phase: "setup",
@@ -129,7 +129,7 @@ function loadSettings() {
     state.qaMinutes = clampPresentationMinutes(saved.qaMinutes ?? state.qaMinutes);
     state.qaSeconds = clampSeconds(saved.qaSeconds ?? state.qaSeconds);
     ensureQaDuration();
-    state.language = saved.language === "en" ? "en" : "ja";
+    state.language = saved.language === "ja" ? "ja" : "en";
     state.sound = saved.soundDefaultVersion === 2 && ["bell", "chime", "beep"].includes(saved.sound) ? saved.sound : "beep";
     state.soundEnabled = typeof saved.soundEnabled === "boolean" ? saved.soundEnabled : (saved.volume ?? 70) > 0;
     saveSettings();
@@ -485,7 +485,7 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./service-worker.js?v=11")
+      .register("./service-worker.js?v=12")
       .then((registration) => registration.update())
       .catch(() => {
         // The app still works without offline caching when opened from a file URL.

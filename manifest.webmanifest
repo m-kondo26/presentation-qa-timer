@@ -1,15 +1,15 @@
 {
   "id": "./",
-  "name": "発表・質疑カウントダウン",
-  "short_name": "発表タイマー",
-  "description": "iPhoneとiPadで発表時間と質疑応答の残り時間を大きく表示するカウントダウンタイマーです。",
+  "name": "Presentation & Q&A Countdown",
+  "short_name": "Presentation Timer",
+  "description": "A presentation and Q&A countdown timer optimized for iPhone, iPad, and desktop browsers.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f7faf9",
   "theme_color": "#f7faf9",
   "orientation": "any",
-  "lang": "ja",
+  "lang": "en",
   "icons": [
     {
       "src": "./assets/icon-180.png",
