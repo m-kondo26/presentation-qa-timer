@@ -3,7 +3,7 @@ const STORAGE_KEY = "presentation-timer-settings-v1";
 const translations = {
   ja: {
     documentTitle: "発表・質疑カウントダウン", languageButton: "English", languageButtonLabel: "Switch to English",
-    appLabel: "iPad 発表タイマー", setupTitle: "発表時間と質疑応答を設定", setupDescription: "開始後は残り時間を大きく表示します。",
+    appLabel: "発表・質疑応答タイマー", setupTitle: "発表時間と質疑応答を設定", setupDescription: "スマートフォンとタブレットに最適化。開始後は残り時間を大きく表示します。",
     durationSettings: "時間設定", presentationTime: "発表時間", qaTime: "質疑応答", minuteSuffix: "分", secondSuffix: "秒", minutesLabel: "分", secondsLabel: "秒",
     presentationMinuteStepper: "発表時間の分を変更", presentationSecondStepper: "発表時間の秒を変更", decreasePresentation: "発表時間を1分短くする", presentationMinutes: "発表時間（分）", increasePresentation: "発表時間を1分長くする", decreasePresentationSecond: "発表時間を1秒短くする", presentationSeconds: "発表時間（秒）", increasePresentationSecond: "発表時間を1秒長くする",
     qaMinuteStepper: "質疑応答時間の分を変更", qaSecondStepper: "質疑応答時間の秒を変更", decreaseQa: "質疑応答を1分短くする", qaMinutes: "質疑応答（分）", increaseQa: "質疑応答を1分長くする", decreaseQaSecond: "質疑応答を1秒短くする", qaSeconds: "質疑応答（秒）", increaseQaSecond: "質疑応答を1秒長くする",
@@ -14,7 +14,7 @@ const translations = {
   },
   en: {
     documentTitle: "Presentation & Q&A Countdown", languageButton: "日本語", languageButtonLabel: "日本語に切り替える",
-    appLabel: "iPad Presentation Timer", setupTitle: "Set presentation and Q&A times", setupDescription: "The remaining time will be shown prominently after you start.",
+    appLabel: "Presentation & Q&A Timer", setupTitle: "Set presentation and Q&A times", setupDescription: "Optimized for smartphones and tablets. The remaining time is shown prominently after you start.",
     durationSettings: "Time settings", presentationTime: "Presentation", qaTime: "Q&A", minuteSuffix: " min", secondSuffix: " sec", minutesLabel: "min", secondsLabel: "sec",
     presentationMinuteStepper: "Adjust presentation minutes", presentationSecondStepper: "Adjust presentation seconds", decreasePresentation: "Decrease presentation time by one minute", presentationMinutes: "Presentation time in minutes", increasePresentation: "Increase presentation time by one minute", decreasePresentationSecond: "Decrease presentation time by one second", presentationSeconds: "Presentation time in seconds", increasePresentationSecond: "Increase presentation time by one second",
     qaMinuteStepper: "Adjust Q&A minutes", qaSecondStepper: "Adjust Q&A seconds", decreaseQa: "Decrease Q&A time by one minute", qaMinutes: "Q&A time in minutes", increaseQa: "Increase Q&A time by one minute", decreaseQaSecond: "Decrease Q&A time by one second", qaSeconds: "Q&A time in seconds", increaseQaSecond: "Increase Q&A time by one second",
@@ -488,7 +488,7 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./service-worker.js?v=13")
+      .register("./service-worker.js?v=15")
       .then((registration) => registration.update())
       .catch(() => {
         // The app still works without offline caching when opened from a file URL.

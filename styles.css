@@ -236,7 +236,9 @@ h1 {
 }
 
 .duration-card strong {
-  font-size: clamp(1.8rem, 4vw, 3rem);
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-size: clamp(1.65rem, 2.8vw, 2.5rem);
   line-height: 1;
 }
 
@@ -492,9 +494,8 @@ h1 {
   }
 
   .duration-card {
-    grid-template-columns: minmax(120px, 0.8fr) minmax(260px, 1.2fr);
-    align-items: center;
-    gap: 12px;
+    grid-template-columns: 1fr;
+    gap: 10px;
     padding: 14px;
   }
 
@@ -794,3 +795,4 @@ h1 {
     transition-duration: 0.001ms !important;
   }
 }
+
