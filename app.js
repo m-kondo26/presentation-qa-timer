@@ -217,7 +217,7 @@ function ensureAudio() {
   return state.audioContext;
 }
 
-function playTone(frequency, startTime, duration, gainValue = 0.2, oscillatorType = "sine") {
+function playTone(frequency, startTime, duration, gainValue = 0.2, oscillatorType = "sine", detune = 0) {
   const audio = ensureAudio();
   if (!audio) return;
 
@@ -225,8 +225,9 @@ function playTone(frequency, startTime, duration, gainValue = 0.2, oscillatorTyp
   const gain = audio.createGain();
   oscillator.type = oscillatorType;
   oscillator.frequency.setValueAtTime(frequency, startTime);
+  oscillator.detune.setValueAtTime(detune, startTime);
   gain.gain.setValueAtTime(0.001, startTime);
-  gain.gain.exponentialRampToValueAtTime(gainValue, startTime + 0.025);
+  gain.gain.exponentialRampToValueAtTime(gainValue, startTime + 0.018);
   gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
   oscillator.connect(gain);
   gain.connect(audio.destination);
@@ -234,11 +235,33 @@ function playTone(frequency, startTime, duration, gainValue = 0.2, oscillatorTyp
   oscillator.stop(startTime + duration + 0.03);
 }
 
+function playBeep(startTime, frequency) {
+  playTone(frequency, startTime, 0.24, 0.13, "sine");
+  playTone(frequency * 2, startTime, 0.16, 0.025, "sine", -4);
+}
+
+function playBell(startTime, frequency) {
+  [
+    { ratio: 1, duration: 1.45, gain: 0.12 },
+    { ratio: 2.01, duration: 1.05, gain: 0.05 },
+    { ratio: 2.68, duration: 0.78, gain: 0.032 },
+    { ratio: 3.93, duration: 0.52, gain: 0.018 },
+  ].forEach((partial) => {
+    playTone(frequency * partial.ratio, startTime, partial.duration, partial.gain, "sine");
+  });
+}
+
+function playChime(startTime, frequency) {
+  playTone(frequency, startTime, 1.05, 0.095, "sine");
+  playTone(frequency * 2, startTime, 0.72, 0.034, "sine", 3);
+  playTone(frequency * 3, startTime, 0.48, 0.014, "sine", -3);
+}
+
 function ringBell(kind = "phase") {
   const profiles = {
-    bell: { notes: [880, 1174, 1568], type: "sine", duration: 0.16, interval: 0.18, gain: 0.28 },
-    chime: { notes: [659, 784, 1047], type: "triangle", duration: 0.34, interval: 0.28, gain: 0.22 },
-    beep: { notes: [1047, 1047, 1047], type: "square", duration: 0.1, interval: 0.16, gain: 0.16 },
+    bell: { notes: [659, 784, 988], interval: 0.42, play: playBell },
+    chime: { notes: [784, 988, 1175], interval: 0.36, play: playChime },
+    beep: { notes: [880, 880, 1047], interval: 0.31, play: playBeep },
   };
   const profile = profiles[state.sound];
   const noteCount = kind === "final" ? 3 : 2;
@@ -247,7 +270,7 @@ function ringBell(kind = "phase") {
     if (audio) {
       const now = audio.currentTime + 0.02;
       profile.notes.slice(0, noteCount).forEach((frequency, index) => {
-        playTone(frequency, now + index * profile.interval, profile.duration, profile.gain, profile.type);
+        profile.play(now + index * profile.interval, frequency);
       });
     }
   }
@@ -488,7 +511,7 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./service-worker.js?v=15")
+      .register("./service-worker.js?v=16")
       .then((registration) => registration.update())
       .catch(() => {
         // The app still works without offline caching when opened from a file URL.
