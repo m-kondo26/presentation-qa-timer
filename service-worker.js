@@ -1,9 +1,9 @@
-const CACHE_NAME = "presentation-timer-v12";
+const CACHE_NAME = "presentation-timer-v13";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=12",
-  "./app.js?v=12",
+  "./styles.css?v=13",
+  "./app.js?v=13",
   "./manifest.webmanifest",
   "./assets/icon.svg",
   "./assets/icon-180.png",
@@ -43,3 +43,4 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request)));
 });
+

@@ -123,13 +123,16 @@ function formatTime(ms) {
 function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    const requestedLanguage = new URLSearchParams(window.location.search).get("lang");
     state.presentationMinutes = clampPresentationMinutes(saved.presentationMinutes ?? state.presentationMinutes);
     state.presentationSeconds = clampSeconds(saved.presentationSeconds ?? state.presentationSeconds);
     ensurePresentationDuration();
     state.qaMinutes = clampPresentationMinutes(saved.qaMinutes ?? state.qaMinutes);
     state.qaSeconds = clampSeconds(saved.qaSeconds ?? state.qaSeconds);
     ensureQaDuration();
-    state.language = saved.language === "ja" ? "ja" : "en";
+    state.language = ["en", "ja"].includes(requestedLanguage)
+      ? requestedLanguage
+      : saved.language === "ja" ? "ja" : "en";
     state.sound = saved.soundDefaultVersion === 2 && ["bell", "chime", "beep"].includes(saved.sound) ? saved.sound : "beep";
     state.soundEnabled = typeof saved.soundEnabled === "boolean" ? saved.soundEnabled : (saved.volume ?? 70) > 0;
     saveSettings();
@@ -485,7 +488,7 @@ function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("./service-worker.js?v=12")
+      .register("./service-worker.js?v=13")
       .then((registration) => registration.update())
       .catch(() => {
         // The app still works without offline caching when opened from a file URL.
@@ -498,3 +501,4 @@ renderSettings();
 renderLanguage();
 bindEvents();
 registerServiceWorker();
+
