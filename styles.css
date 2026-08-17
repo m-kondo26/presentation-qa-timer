@@ -39,7 +39,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -55,6 +56,11 @@ button {
 
 button:focus-visible,
 input:focus-visible {
+  outline: 4px solid rgba(0, 122, 104, 0.28);
+  outline-offset: 3px;
+}
+
+select:focus-visible {
   outline: 4px solid rgba(0, 122, 104, 0.28);
   outline-offset: 3px;
 }
@@ -100,6 +106,45 @@ input:focus-visible {
 .setup-copy {
   display: grid;
   gap: 8px;
+}
+
+.sound-settings {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(260px, 1.2fr);
+  gap: 18px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-strong);
+}
+
+.sound-field,
+.volume-field {
+  display: grid;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.94rem;
+  font-weight: 800;
+}
+
+.sound-field select {
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.volume-field input {
+  width: 100%;
+  min-height: 32px;
+  accent-color: var(--accent);
+}
+
+#volumeValue {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 .app-label,
@@ -376,6 +421,46 @@ h1 {
   }
 }
 
+@media (max-height: 760px) and (min-width: 761px) {
+  body {
+    overflow: auto;
+  }
+
+  .app-shell {
+    place-items: start center;
+    padding: 16px;
+  }
+
+  .setup-panel {
+    gap: 14px;
+    padding: 18px;
+  }
+
+  .setup-copy {
+    gap: 4px;
+  }
+
+  .setup-copy h1 {
+    font-size: 2rem;
+  }
+
+  .duration-card {
+    grid-template-columns: minmax(120px, 0.8fr) minmax(260px, 1.2fr);
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .icon-button,
+  .stepper input {
+    height: 48px;
+  }
+
+  .sound-settings {
+    padding: 12px 14px;
+  }
+}
+
 @media (max-width: 760px) {
   body {
     overflow: auto;
@@ -387,6 +472,10 @@ h1 {
   }
 
   .duration-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sound-settings {
     grid-template-columns: 1fr;
   }
 

@@ -7,7 +7,8 @@ const translations = {
     durationSettings: "時間設定", presentationTime: "発表時間", qaTime: "質疑応答", minuteSuffix: "分",
     presentationStepper: "発表時間を1分単位で変更", decreasePresentation: "発表時間を1分短くする", presentationMinutes: "発表時間（分）", increasePresentation: "発表時間を1分長くする",
     qaStepper: "質疑応答を1分単位で変更", decreaseQa: "質疑応答を1分短くする", qaMinutes: "質疑応答（分）", increaseQa: "質疑応答を1分長くする",
-    start: "スタート", testBell: "ベル確認", configuredTimes: "設定時間", presentationSummary: "分 発表", qaSummary: "分 質疑", remainingTime: "残り時間",
+    soundSettings: "通知音設定", soundLabel: "通知音", soundBell: "ベル", soundChime: "チャイム", soundBeep: "ビープ", volumeLabel: "音量", volumeAria: "通知音量。0は無音",
+    start: "スタート", testBell: "音を確認", configuredTimes: "設定時間", presentationSummary: "分 発表", qaSummary: "分 質疑", remainingTime: "残り時間",
     presenting: "発表中", presentationTitle: "発表時間", presentationMessage: "発表の残り時間です。", qaActive: "質疑応答中", qaTitle: "質疑応答", qaMessage: "質疑応答の残り時間です。",
     pause: "一時停止", resume: "再開", toQa: "質疑へ", toEnd: "終了へ", reset: "リセット", finishedLabel: "終了", finishedTitle: "発表と質疑応答が終了しました", nextSpeaker: "次の演者を開始",
   },
@@ -17,7 +18,8 @@ const translations = {
     durationSettings: "Time settings", presentationTime: "Presentation", qaTime: "Q&A", minuteSuffix: " min",
     presentationStepper: "Adjust presentation time in one-minute increments", decreasePresentation: "Decrease presentation time by one minute", presentationMinutes: "Presentation time in minutes", increasePresentation: "Increase presentation time by one minute",
     qaStepper: "Adjust Q&A time in one-minute increments", decreaseQa: "Decrease Q&A time by one minute", qaMinutes: "Q&A time in minutes", increaseQa: "Increase Q&A time by one minute",
-    start: "Start", testBell: "Test Bell", configuredTimes: "Configured times", presentationSummary: " min Presentation", qaSummary: " min Q&A", remainingTime: "Time remaining",
+    soundSettings: "Alert sound settings", soundLabel: "Alert Sound", soundBell: "Bell", soundChime: "Chime", soundBeep: "Beep", volumeLabel: "Volume", volumeAria: "Alert volume. Set to zero for silent mode",
+    start: "Start", testBell: "Test Sound", configuredTimes: "Configured times", presentationSummary: " min Presentation", qaSummary: " min Q&A", remainingTime: "Time remaining",
     presenting: "PRESENTING", presentationTitle: "Presentation", presentationMessage: "Presentation time remaining.", qaActive: "Q&A IN PROGRESS", qaTitle: "Q&A", qaMessage: "Q&A time remaining.",
     pause: "Pause", resume: "Resume", toQa: "Go to Q&A", toEnd: "Finish", reset: "Reset", finishedLabel: "FINISHED", finishedTitle: "Presentation and Q&A completed", nextSpeaker: "Start Next Speaker",
   },
@@ -27,6 +29,8 @@ const state = {
   presentationMinutes: 7,
   qaMinutes: 3,
   language: "ja",
+  sound: "bell",
+  volume: 70,
   phase: "setup",
   isPaused: false,
   phaseStartedAt: 0,
@@ -61,6 +65,9 @@ const el = {
   nextSpeakerButton: document.getElementById("nextSpeakerButton"),
   resetButton: document.getElementById("resetButton"),
   languageButton: document.getElementById("languageButton"),
+  soundSelect: document.getElementById("soundSelect"),
+  volumeInput: document.getElementById("volumeInput"),
+  volumeValue: document.getElementById("volumeValue"),
 };
 
 function text(key) {
@@ -87,6 +94,8 @@ function loadSettings() {
     state.presentationMinutes = clampMinutes(saved.presentationMinutes ?? state.presentationMinutes);
     state.qaMinutes = clampMinutes(saved.qaMinutes ?? state.qaMinutes);
     state.language = saved.language === "en" ? "en" : "ja";
+    state.sound = ["bell", "chime", "beep"].includes(saved.sound) ? saved.sound : "bell";
+    state.volume = Math.min(100, Math.max(0, Number.parseInt(saved.volume ?? state.volume, 10) || 0));
   } catch {
     saveSettings();
   }
@@ -99,6 +108,8 @@ function saveSettings() {
       presentationMinutes: state.presentationMinutes,
       qaMinutes: state.qaMinutes,
       language: state.language,
+      sound: state.sound,
+      volume: state.volume,
     }),
   );
 }
@@ -131,6 +142,9 @@ function renderSettings() {
   el.qaValue.textContent = state.qaMinutes;
   el.summaryPresentation.textContent = state.presentationMinutes;
   el.summaryQa.textContent = state.qaMinutes;
+  el.soundSelect.value = state.sound;
+  el.volumeInput.value = state.volume;
+  el.volumeValue.textContent = `${state.volume}%`;
 }
 
 function setPanel(panelName) {
@@ -151,13 +165,13 @@ function ensureAudio() {
   return state.audioContext;
 }
 
-function playTone(frequency, startTime, duration, gainValue = 0.2) {
+function playTone(frequency, startTime, duration, gainValue = 0.2, oscillatorType = "sine") {
   const audio = ensureAudio();
   if (!audio) return;
 
   const oscillator = audio.createOscillator();
   const gain = audio.createGain();
-  oscillator.type = "sine";
+  oscillator.type = oscillatorType;
   oscillator.frequency.setValueAtTime(frequency, startTime);
   gain.gain.setValueAtTime(0.001, startTime);
   gain.gain.exponentialRampToValueAtTime(gainValue, startTime + 0.025);
@@ -169,14 +183,24 @@ function playTone(frequency, startTime, duration, gainValue = 0.2) {
 }
 
 function ringBell(kind = "phase") {
-  const audio = ensureAudio();
-  if (!audio) return;
+  const profiles = {
+    bell: { notes: [880, 1174, 1568], type: "sine", duration: 0.16, interval: 0.18, gain: 0.28 },
+    chime: { notes: [659, 784, 1047], type: "triangle", duration: 0.34, interval: 0.28, gain: 0.22 },
+    beep: { notes: [1047, 1047, 1047], type: "square", duration: 0.1, interval: 0.16, gain: 0.16 },
+  };
+  const profile = profiles[state.sound];
+  const noteCount = kind === "final" ? 3 : 2;
+  const volumeScale = state.volume / 100;
 
-  const now = audio.currentTime + 0.02;
-  const pattern = kind === "final" ? [880, 1174, 1568] : [880, 1174];
-  pattern.forEach((frequency, index) => {
-    playTone(frequency, now + index * 0.18, 0.16, 0.22);
-  });
+  if (volumeScale > 0) {
+    const audio = ensureAudio();
+    if (audio) {
+      const now = audio.currentTime + 0.02;
+      profile.notes.slice(0, noteCount).forEach((frequency, index) => {
+        playTone(frequency, now + index * profile.interval, profile.duration, profile.gain * volumeScale, profile.type);
+      });
+    }
+  }
 
   if ("vibrate" in navigator) {
     navigator.vibrate(kind === "final" ? [120, 80, 120] : [120]);
@@ -362,6 +386,15 @@ function bindEvents() {
   el.resetButton.addEventListener("click", resetToSetup);
   el.nextSpeakerButton.addEventListener("click", startSession);
   el.languageButton.addEventListener("click", toggleLanguage);
+  el.soundSelect.addEventListener("change", () => {
+    state.sound = el.soundSelect.value;
+    saveSettings();
+  });
+  el.volumeInput.addEventListener("input", () => {
+    state.volume = Number.parseInt(el.volumeInput.value, 10);
+    el.volumeValue.textContent = `${state.volume}%`;
+    saveSettings();
+  });
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && (state.phase === "presentation" || state.phase === "qa") && !state.isPaused) {

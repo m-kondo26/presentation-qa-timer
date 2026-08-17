@@ -57,6 +57,21 @@
           </article>
         </div>
 
+        <div class="sound-settings" aria-label="通知音設定" data-i18n-aria="soundSettings">
+          <label class="sound-field">
+            <span data-i18n="soundLabel">通知音</span>
+            <select id="soundSelect">
+              <option value="bell" data-i18n="soundBell">ベル</option>
+              <option value="chime" data-i18n="soundChime">チャイム</option>
+              <option value="beep" data-i18n="soundBeep">ビープ</option>
+            </select>
+          </label>
+          <label class="volume-field">
+            <span><span data-i18n="volumeLabel">音量</span> <output id="volumeValue" for="volumeInput">70%</output></span>
+            <input id="volumeInput" type="range" min="0" max="100" step="10" value="70" aria-label="通知音量。0は無音" data-i18n-aria="volumeAria" />
+          </label>
+        </div>
+
         <div class="setup-actions">
           <button id="startButton" type="button" class="primary-button" data-i18n="start">スタート</button>
           <button id="testBellButton" type="button" class="secondary-button" data-i18n="testBell">ベル確認</button>
