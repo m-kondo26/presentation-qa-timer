@@ -4,22 +4,22 @@ const translations = {
   ja: {
     documentTitle: "発表・質疑カウントダウン", languageButton: "English", languageButtonLabel: "Switch to English",
     appLabel: "iPad 発表タイマー", setupTitle: "発表時間と質疑応答を設定", setupDescription: "開始後は残り時間を大きく表示します。",
-    durationSettings: "時間設定", presentationTime: "発表時間", qaTime: "質疑応答", minuteSuffix: "分",
-    presentationStepper: "発表時間を1分単位で変更", decreasePresentation: "発表時間を1分短くする", presentationMinutes: "発表時間（分）", increasePresentation: "発表時間を1分長くする",
+    durationSettings: "時間設定", presentationTime: "発表時間", qaTime: "質疑応答", minuteSuffix: "分", secondSuffix: "秒", minutesLabel: "分", secondsLabel: "秒",
+    presentationMinuteStepper: "発表時間の分を変更", presentationSecondStepper: "発表時間の秒を変更", decreasePresentation: "発表時間を1分短くする", presentationMinutes: "発表時間（分）", increasePresentation: "発表時間を1分長くする", decreasePresentationSecond: "発表時間を1秒短くする", presentationSeconds: "発表時間（秒）", increasePresentationSecond: "発表時間を1秒長くする",
     qaStepper: "質疑応答を1分単位で変更", decreaseQa: "質疑応答を1分短くする", qaMinutes: "質疑応答（分）", increaseQa: "質疑応答を1分長くする",
-    soundSettings: "通知音設定", soundLabel: "通知音", soundBell: "ベル", soundChime: "チャイム", soundBeep: "ビープ", volumeLabel: "音量", volumeAria: "通知音量。0は無音",
-    start: "スタート", testBell: "音を確認", configuredTimes: "設定時間", presentationSummary: "分 発表", qaSummary: "分 質疑", remainingTime: "残り時間",
+    soundSettings: "通知音設定", soundLabel: "通知音", soundBell: "ベル", soundChime: "チャイム", soundBeep: "ビープ", soundModeLabel: "通知", soundEnabledAria: "通知音の有無", soundOn: "音あり", soundOff: "無音",
+    start: "スタート", testBell: "音を確認", configuredTimes: "設定時間", presentationSummary: " 発表", qaSummary: "分 質疑", remainingTime: "残り時間",
     presenting: "発表中", presentationTitle: "発表時間", presentationMessage: "発表の残り時間です。", qaActive: "質疑応答中", qaTitle: "質疑応答", qaMessage: "質疑応答の残り時間です。",
     pause: "一時停止", resume: "再開", toQa: "質疑へ", toEnd: "終了へ", reset: "リセット", finishedLabel: "終了", finishedTitle: "発表と質疑応答が終了しました", nextSpeaker: "次の演者を開始",
   },
   en: {
     documentTitle: "Presentation & Q&A Countdown", languageButton: "日本語", languageButtonLabel: "日本語に切り替える",
     appLabel: "iPad Presentation Timer", setupTitle: "Set presentation and Q&A times", setupDescription: "The remaining time will be shown prominently after you start.",
-    durationSettings: "Time settings", presentationTime: "Presentation", qaTime: "Q&A", minuteSuffix: " min",
-    presentationStepper: "Adjust presentation time in one-minute increments", decreasePresentation: "Decrease presentation time by one minute", presentationMinutes: "Presentation time in minutes", increasePresentation: "Increase presentation time by one minute",
+    durationSettings: "Time settings", presentationTime: "Presentation", qaTime: "Q&A", minuteSuffix: " min", secondSuffix: " sec", minutesLabel: "min", secondsLabel: "sec",
+    presentationMinuteStepper: "Adjust presentation minutes", presentationSecondStepper: "Adjust presentation seconds", decreasePresentation: "Decrease presentation time by one minute", presentationMinutes: "Presentation time in minutes", increasePresentation: "Increase presentation time by one minute", decreasePresentationSecond: "Decrease presentation time by one second", presentationSeconds: "Presentation time in seconds", increasePresentationSecond: "Increase presentation time by one second",
     qaStepper: "Adjust Q&A time in one-minute increments", decreaseQa: "Decrease Q&A time by one minute", qaMinutes: "Q&A time in minutes", increaseQa: "Increase Q&A time by one minute",
-    soundSettings: "Alert sound settings", soundLabel: "Alert Sound", soundBell: "Bell", soundChime: "Chime", soundBeep: "Beep", volumeLabel: "Volume", volumeAria: "Alert volume. Set to zero for silent mode",
-    start: "Start", testBell: "Test Sound", configuredTimes: "Configured times", presentationSummary: " min Presentation", qaSummary: " min Q&A", remainingTime: "Time remaining",
+    soundSettings: "Alert sound settings", soundLabel: "Alert Sound", soundBell: "Bell", soundChime: "Chime", soundBeep: "Beep", soundModeLabel: "Alert", soundEnabledAria: "Enable alert sound", soundOn: "Sound On", soundOff: "Muted",
+    start: "Start", testBell: "Test Sound", configuredTimes: "Configured times", presentationSummary: " Presentation", qaSummary: " min Q&A", remainingTime: "Time remaining",
     presenting: "PRESENTING", presentationTitle: "Presentation", presentationMessage: "Presentation time remaining.", qaActive: "Q&A IN PROGRESS", qaTitle: "Q&A", qaMessage: "Q&A time remaining.",
     pause: "Pause", resume: "Resume", toQa: "Go to Q&A", toEnd: "Finish", reset: "Reset", finishedLabel: "FINISHED", finishedTitle: "Presentation and Q&A completed", nextSpeaker: "Start Next Speaker",
   },
@@ -27,10 +27,11 @@ const translations = {
 
 const state = {
   presentationMinutes: 7,
+  presentationSeconds: 0,
   qaMinutes: 3,
   language: "ja",
-  sound: "bell",
-  volume: 70,
+  sound: "beep",
+  soundEnabled: true,
   phase: "setup",
   isPaused: false,
   phaseStartedAt: 0,
@@ -47,8 +48,10 @@ const el = {
   timerPanel: document.getElementById("timerPanel"),
   completePanel: document.getElementById("completePanel"),
   presentationInput: document.getElementById("presentationInput"),
+  presentationSecondsInput: document.getElementById("presentationSecondsInput"),
   qaInput: document.getElementById("qaInput"),
   presentationValue: document.getElementById("presentationValue"),
+  presentationSecondsValue: document.getElementById("presentationSecondsValue"),
   qaValue: document.getElementById("qaValue"),
   startButton: document.getElementById("startButton"),
   testBellButton: document.getElementById("testBellButton"),
@@ -66,8 +69,8 @@ const el = {
   resetButton: document.getElementById("resetButton"),
   languageButton: document.getElementById("languageButton"),
   soundSelect: document.getElementById("soundSelect"),
-  volumeInput: document.getElementById("volumeInput"),
-  volumeValue: document.getElementById("volumeValue"),
+  soundEnabledInput: document.getElementById("soundEnabledInput"),
+  soundEnabledLabel: document.getElementById("soundEnabledLabel"),
 };
 
 function text(key) {
@@ -78,6 +81,28 @@ function clampMinutes(value) {
   const parsed = Number.parseInt(value, 10);
   if (Number.isNaN(parsed)) return 1;
   return Math.min(60, Math.max(1, parsed));
+}
+
+function clampPresentationMinutes(value) {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed)) return 0;
+  return Math.min(60, Math.max(0, parsed));
+}
+
+function clampSeconds(value) {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed)) return 0;
+  return Math.min(59, Math.max(0, parsed));
+}
+
+function ensurePresentationDuration() {
+  if (state.presentationMinutes === 0 && state.presentationSeconds === 0) {
+    state.presentationSeconds = 1;
+  }
+}
+
+function formatConfiguredPresentation() {
+  return `${String(state.presentationMinutes).padStart(2, "0")}:${String(state.presentationSeconds).padStart(2, "0")}`;
 }
 
 function formatTime(ms) {
@@ -91,11 +116,14 @@ function formatTime(ms) {
 function loadSettings() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    state.presentationMinutes = clampMinutes(saved.presentationMinutes ?? state.presentationMinutes);
+    state.presentationMinutes = clampPresentationMinutes(saved.presentationMinutes ?? state.presentationMinutes);
+    state.presentationSeconds = clampSeconds(saved.presentationSeconds ?? state.presentationSeconds);
+    ensurePresentationDuration();
     state.qaMinutes = clampMinutes(saved.qaMinutes ?? state.qaMinutes);
     state.language = saved.language === "en" ? "en" : "ja";
-    state.sound = ["bell", "chime", "beep"].includes(saved.sound) ? saved.sound : "bell";
-    state.volume = Math.min(100, Math.max(0, Number.parseInt(saved.volume ?? state.volume, 10) || 0));
+    state.sound = saved.soundDefaultVersion === 2 && ["bell", "chime", "beep"].includes(saved.sound) ? saved.sound : "beep";
+    state.soundEnabled = typeof saved.soundEnabled === "boolean" ? saved.soundEnabled : (saved.volume ?? 70) > 0;
+    saveSettings();
   } catch {
     saveSettings();
   }
@@ -106,10 +134,12 @@ function saveSettings() {
     STORAGE_KEY,
     JSON.stringify({
       presentationMinutes: state.presentationMinutes,
+      presentationSeconds: state.presentationSeconds,
       qaMinutes: state.qaMinutes,
       language: state.language,
       sound: state.sound,
-      volume: state.volume,
+      soundEnabled: state.soundEnabled,
+      soundDefaultVersion: 2,
     }),
   );
 }
@@ -127,6 +157,7 @@ function renderLanguage() {
   el.languageButton.textContent = text("languageButton");
   el.languageButton.setAttribute("aria-label", text("languageButtonLabel"));
   if (state.phase === "presentation" || state.phase === "qa") renderPhaseShell();
+  el.soundEnabledLabel.textContent = text(state.soundEnabled ? "soundOn" : "soundOff");
 }
 
 function toggleLanguage() {
@@ -137,14 +168,16 @@ function toggleLanguage() {
 
 function renderSettings() {
   el.presentationInput.value = state.presentationMinutes;
+  el.presentationSecondsInput.value = state.presentationSeconds;
   el.qaInput.value = state.qaMinutes;
   el.presentationValue.textContent = state.presentationMinutes;
+  el.presentationSecondsValue.textContent = String(state.presentationSeconds).padStart(2, "0");
   el.qaValue.textContent = state.qaMinutes;
-  el.summaryPresentation.textContent = state.presentationMinutes;
+  el.summaryPresentation.textContent = formatConfiguredPresentation();
   el.summaryQa.textContent = state.qaMinutes;
   el.soundSelect.value = state.sound;
-  el.volumeInput.value = state.volume;
-  el.volumeValue.textContent = `${state.volume}%`;
+  el.soundEnabledInput.checked = state.soundEnabled;
+  el.soundEnabledLabel.textContent = text(state.soundEnabled ? "soundOn" : "soundOff");
 }
 
 function setPanel(panelName) {
@@ -190,19 +223,17 @@ function ringBell(kind = "phase") {
   };
   const profile = profiles[state.sound];
   const noteCount = kind === "final" ? 3 : 2;
-  const volumeScale = state.volume / 100;
-
-  if (volumeScale > 0) {
+  if (state.soundEnabled) {
     const audio = ensureAudio();
     if (audio) {
       const now = audio.currentTime + 0.02;
       profile.notes.slice(0, noteCount).forEach((frequency, index) => {
-        playTone(frequency, now + index * profile.interval, profile.duration, profile.gain * volumeScale, profile.type);
+        playTone(frequency, now + index * profile.interval, profile.duration, profile.gain, profile.type);
       });
     }
   }
 
-  if ("vibrate" in navigator) {
+  if (state.soundEnabled && "vibrate" in navigator) {
     navigator.vibrate(kind === "final" ? [120, 80, 120] : [120]);
   }
 
@@ -237,7 +268,10 @@ function clearTick() {
 }
 
 function getPhaseDurationMs(phase) {
-  return (phase === "presentation" ? state.presentationMinutes : state.qaMinutes) * 60 * 1000;
+  if (phase === "presentation") {
+    return (state.presentationMinutes * 60 + state.presentationSeconds) * 1000;
+  }
+  return state.qaMinutes * 60 * 1000;
 }
 
 function startPhase(phase) {
@@ -253,7 +287,7 @@ function startPhase(phase) {
 }
 
 function startSession() {
-  ensureAudio();
+  if (state.soundEnabled) ensureAudio();
   saveSettings();
   renderSettings();
   setPanel("timer");
@@ -355,13 +389,15 @@ function resetToSetup() {
   renderSettings();
 }
 
-function updateMinutes(kind, value) {
-  const nextValue = clampMinutes(value);
+function updateDuration(kind, value) {
   if (kind === "presentation") {
-    state.presentationMinutes = nextValue;
+    state.presentationMinutes = clampPresentationMinutes(value);
+  } else if (kind === "presentationSeconds") {
+    state.presentationSeconds = clampSeconds(value);
   } else {
-    state.qaMinutes = nextValue;
+    state.qaMinutes = clampMinutes(value);
   }
+  ensurePresentationDuration();
   saveSettings();
   renderSettings();
 }
@@ -371,13 +407,14 @@ function bindEvents() {
     button.addEventListener("click", () => {
       const kind = button.dataset.adjust;
       const delta = Number.parseInt(button.dataset.delta, 10);
-      const current = kind === "presentation" ? state.presentationMinutes : state.qaMinutes;
-      updateMinutes(kind, current + delta);
+      const current = kind === "presentation" ? state.presentationMinutes : kind === "presentationSeconds" ? state.presentationSeconds : state.qaMinutes;
+      updateDuration(kind, current + delta);
     });
   });
 
-  el.presentationInput.addEventListener("change", () => updateMinutes("presentation", el.presentationInput.value));
-  el.qaInput.addEventListener("change", () => updateMinutes("qa", el.qaInput.value));
+  el.presentationInput.addEventListener("input", () => updateDuration("presentation", el.presentationInput.value));
+  el.presentationSecondsInput.addEventListener("input", () => updateDuration("presentationSeconds", el.presentationSecondsInput.value));
+  el.qaInput.addEventListener("input", () => updateDuration("qa", el.qaInput.value));
   el.startButton.addEventListener("click", startSession);
   el.testBellButton.addEventListener("click", () => ringBell("phase"));
   el.pauseButton.addEventListener("click", pauseOrResume);
@@ -390,9 +427,9 @@ function bindEvents() {
     state.sound = el.soundSelect.value;
     saveSettings();
   });
-  el.volumeInput.addEventListener("input", () => {
-    state.volume = Number.parseInt(el.volumeInput.value, 10);
-    el.volumeValue.textContent = `${state.volume}%`;
+  el.soundEnabledInput.addEventListener("change", () => {
+    state.soundEnabled = el.soundEnabledInput.checked;
+    el.soundEnabledLabel.textContent = text(state.soundEnabled ? "soundOn" : "soundOff");
     saveSettings();
   });
 
@@ -408,7 +445,7 @@ function bindEvents() {
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js?v=5").catch(() => {
+    navigator.serviceWorker.register("./service-worker.js?v=6").catch(() => {
       // The app still works without offline caching when opened from a file URL.
     });
   });

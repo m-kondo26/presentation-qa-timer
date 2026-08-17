@@ -1,9 +1,9 @@
-const CACHE_NAME = "presentation-timer-v5";
+const CACHE_NAME = "presentation-timer-v6";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=5",
-  "./app.js?v=5",
+  "./styles.css?v=6",
+  "./app.js?v=6",
   "./manifest.webmanifest",
   "./assets/icon.svg",
   "./assets/icon-180.png",
