@@ -88,6 +88,25 @@ select:focus-visible {
   padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
 }
 
+.usage-counter {
+  position: fixed;
+  z-index: 5;
+  left: max(12px, env(safe-area-inset-left));
+  bottom: max(8px, env(safe-area-inset-bottom));
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  opacity: 0.72;
+}
+
+.usage-counter strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
 .setup-panel,
 .complete-panel {
   width: min(960px, 100%);

@@ -11,6 +11,7 @@ const translations = {
     start: "スタート", testBell: "音を確認", configuredTimes: "設定時間", presentationSummary: " 発表", qaSummary: " 質疑", remainingTime: "残り時間",
     presenting: "発表中", presentationTitle: "発表時間", presentationMessage: "発表の残り時間です。", qaActive: "質疑応答中", qaTitle: "質疑応答", qaMessage: "質疑応答の残り時間です。",
     pause: "一時停止", resume: "再開", toQa: "質疑へ", toEnd: "終了へ", reset: "リセット", finishedLabel: "終了", finishedTitle: "発表と質疑応答が終了しました", nextSpeaker: "次の演者を開始",
+    timerPageViews: "Timerページ表示数", todayLabel: "本日", totalLabel: "累計",
   },
   en: {
     documentTitle: "Presentation & Q&A Countdown", languageButton: "日本語", languageButtonLabel: "日本語に切り替える",
@@ -22,6 +23,7 @@ const translations = {
     start: "Start", testBell: "Test Sound", configuredTimes: "Configured times", presentationSummary: " Presentation", qaSummary: " Q&A", remainingTime: "Time remaining",
     presenting: "PRESENTING", presentationTitle: "Presentation", presentationMessage: "Presentation time remaining.", qaActive: "Q&A IN PROGRESS", qaTitle: "Q&A", qaMessage: "Q&A time remaining.",
     pause: "Pause", resume: "Resume", toQa: "Go to Q&A", toEnd: "Finish", reset: "Reset", finishedLabel: "FINISHED", finishedTitle: "Presentation and Q&A completed", nextSpeaker: "Start Next Speaker",
+    timerPageViews: "Timer page views", todayLabel: "Today", totalLabel: "Total",
   },
 };
 
@@ -74,7 +76,29 @@ const el = {
   soundSelect: document.getElementById("soundSelect"),
   soundEnabledInput: document.getElementById("soundEnabledInput"),
   soundEnabledLabel: document.getElementById("soundEnabledLabel"),
+  usageCounter: document.getElementById("usageCounter"),
+  timerToday: document.getElementById("timerToday"),
+  timerTotal: document.getElementById("timerTotal"),
 };
+
+async function refreshTimerCounter() {
+  try {
+    const response = await fetch("https://square-cake-5b98.kondou-masatoshi-074.workers.dev/count", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ site: "timer" }),
+    });
+
+    if (!response.ok) return;
+
+    const stats = await response.json();
+    el.timerToday.textContent = Number(stats.today.timer).toLocaleString();
+    el.timerTotal.textContent = Number(stats.allTime.timer).toLocaleString();
+    el.usageCounter.hidden = false;
+  } catch {
+    // The timer remains fully usable if the optional counter is unavailable.
+  }
+}
 
 function text(key) {
   return translations[state.language][key];
@@ -524,4 +548,5 @@ renderSettings();
 renderLanguage();
 bindEvents();
 registerServiceWorker();
+refreshTimerCounter();
 

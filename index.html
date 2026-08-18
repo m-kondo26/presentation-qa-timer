@@ -12,7 +12,7 @@
     <link rel="icon" type="image/svg+xml" href="./assets/icon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="./assets/icon-180.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=17" />
+    <link rel="stylesheet" href="./styles.css?v=18" />
   </head>
   <body>
     <button id="languageButton" type="button" class="language-button" aria-label="日本語に切り替える">日本語</button>
@@ -155,7 +155,12 @@
       </section>
     </main>
 
-    <script src="./app.js?v=17" defer></script>
+    <p id="usageCounter" class="usage-counter" hidden>
+      <span data-i18n="timerPageViews">Timer page views</span>
+      <span><span data-i18n="todayLabel">Today</span> <strong id="timerToday">—</strong> · <span data-i18n="totalLabel">Total</span> <strong id="timerTotal">—</strong></span>
+    </p>
+
+    <script src="./app.js?v=18" defer></script>
   <!-- Cloudflare Web Analytics -->
   <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token":"8cd31baa0ac5446aab19d66d7a0b5060"}'></script>
   <!-- End Cloudflare Web Analytics -->
