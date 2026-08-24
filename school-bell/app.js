@@ -66,8 +66,8 @@ const translations = {
     delete: "削除",
     syncing: "ネット時刻を同期中",
     synced: "ネット時刻 同期済み ±{seconds}秒",
-    usingPreviousSync: "前回の同期を使用中",
-    usingDeviceTime: "端末時刻を使用中",
+    usingPreviousSync: "オフライン・前回のネット時刻を使用中",
+    usingDeviceTime: "オフライン・端末時計を使用中",
     audioStartError: "このブラウザーでは音声を開始できませんでした。SafariまたはChromeで開き直してください。",
     audioStoppedError: "音声が停止されました。もう一度「監視を開始」を押してください。",
     audioPlaybackError: "チャイムを再生できませんでした。ブラウザーの音声設定を確認してください。",
@@ -127,8 +127,8 @@ const translations = {
     delete: "Delete",
     syncing: "Syncing network time",
     synced: "Network time synced ±{seconds}s",
-    usingPreviousSync: "Using the last time sync",
-    usingDeviceTime: "Using device time",
+    usingPreviousSync: "Offline · Using the last network time",
+    usingDeviceTime: "Offline · Using this device’s clock",
     audioStartError: "Audio could not start in this browser. Reopen the page in Safari or Chrome.",
     audioStoppedError: "Audio was suspended. Tap “Start Monitoring” again.",
     audioPlaybackError: "The chime could not play. Check your browser audio settings.",
@@ -419,6 +419,16 @@ function renderSyncState(status, message) {
   el.syncLabel.textContent = message;
 }
 
+function renderOfflineTimeSource() {
+  if (state.hasNetworkTime) {
+    renderSyncState("offline", text("usingPreviousSync"));
+  } else {
+    state.clockOffsetMs = 0;
+    renderSyncState("offline", text("usingDeviceTime"));
+  }
+  renderTimeline(correctedNow());
+}
+
 async function fetchServerTimeSample(sampleIndex) {
   const url = new URL("./index.html", window.location.href);
   url.searchParams.set("clock-sync", `${Date.now()}-${sampleIndex}`);
@@ -461,12 +471,7 @@ async function syncNetworkTime() {
     renderSyncState("synced", text("synced", { seconds: accuracySeconds }));
     renderTimeline(correctedNow());
   } catch {
-    if (state.hasNetworkTime) {
-      renderSyncState("offline", text("usingPreviousSync"));
-    } else {
-      state.clockOffsetMs = 0;
-      renderSyncState("offline", text("usingDeviceTime"));
-    }
+    renderOfflineTimeSource();
   } finally {
     state.syncInProgress = false;
   }
@@ -712,6 +717,7 @@ function bindEvents() {
   });
   window.addEventListener("pagehide", releaseWakeLock);
   window.addEventListener("online", syncNetworkTime);
+  window.addEventListener("offline", renderOfflineTimeSource);
 }
 
 function initialize() {
