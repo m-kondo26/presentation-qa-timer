@@ -19,6 +19,8 @@ import {
 const STORAGE_KEY = "school-bell-settings-v1";
 const SYNC_INTERVAL_MS = 5 * 60 * 1000;
 const DUE_WINDOW_MS = 5000;
+const BACKGROUND_CHIME_GRACE_MS = 90 * 1000;
+const MAX_TIMEOUT_MS = 2_147_000_000;
 
 const translations = {
   ja: {
@@ -38,7 +40,7 @@ const translations = {
     stopMonitoring: "監視を停止",
     testChime: "チャイムを試聴（約22秒）",
     monitorStoppedNote: "iPadの音量を確認し、このページを開いたまま「監視を開始」を押してください。",
-    monitorActiveNote: "監視中です。このページを前面に表示したままにしてください。",
+    monitorActiveNote: "監視中です。別タブ・最小化中も可能な範囲で監視します。iPadで別アプリを表示中または画面消灯中は、OSの制限により鳴らないことがあります。",
     scheduleTitle: "時間割",
     resetSchedule: "初期時間に戻す",
     activeWeekdays: "チャイムを鳴らす曜日",
@@ -47,7 +49,7 @@ const translations = {
     addPeriod: "＋ 時限を追加",
     chimeVolume: "チャイム音量",
     usageTitle: "使用上の注意",
-    usageDescription: "iPadでは音声の許可に最初のタップが必要です。監視中は画面のスリープをできるだけ防ぎますが、このページを前面に表示したまま、消音設定と本体音量を事前に確認してください。",
+    usageDescription: "iPadでは音声の許可に最初のタップが必要です。別タブや最小化中の遅延を補う監視を行いますが、別アプリ表示中や画面消灯中はiPadOSがWebページを停止することがあります。確実に鳴らす場合はページを前面表示し、消音設定と本体音量を確認してください。",
     labelRequired: "名称を入力してください",
     timeRequired: "時刻を入力してください",
     startBeforeEnd: "開始は終了より前にしてください",
@@ -99,7 +101,7 @@ const translations = {
     stopMonitoring: "Stop Monitoring",
     testChime: "Test Chime (about 22 sec)",
     monitorStoppedNote: "Check your iPad volume, keep this page open, and tap “Start Monitoring.”",
-    monitorActiveNote: "Monitoring is active. Keep this page open in the foreground.",
+    monitorActiveNote: "Monitoring is active. Background tabs and minimized windows are monitored when the browser allows it. iPadOS may stop the page while another app is shown or the screen is off.",
     scheduleTitle: "Schedule",
     resetSchedule: "Restore Default Times",
     activeWeekdays: "Days to ring the chime",
@@ -108,7 +110,7 @@ const translations = {
     addPeriod: "+ Add Period",
     chimeVolume: "Chime Volume",
     usageTitle: "Before You Use It",
-    usageDescription: "On iPad, audio requires an initial tap. Monitoring requests that the screen stay awake when supported, but keep this page in the foreground and check Silent Mode and device volume beforehand.",
+    usageDescription: "On iPad, audio requires an initial tap. Extra checks recover short delays in background tabs and minimized windows, but iPadOS may stop a web page while another app is shown or the screen is off. For reliable ringing, keep this page in the foreground and check Silent Mode and device volume.",
     labelRequired: "Enter a period name",
     timeRequired: "Enter both times",
     startBeforeEnd: "Start time must be earlier than end time",
@@ -159,6 +161,8 @@ const state = {
   lastSyncAt: 0,
   syncTimerId: 0,
   tickTimerId: 0,
+  nextChimeTimerId: 0,
+  lastTickAtMs: 0,
   wakeLock: null,
   audioContext: null,
   firedEvents: new Set(),
@@ -242,6 +246,7 @@ function saveSettings() {
       language: state.language,
     }),
   );
+  scheduleNextChimeAlarm();
 }
 
 function renderLanguage() {
@@ -427,6 +432,7 @@ function renderOfflineTimeSource() {
     renderSyncState("offline", text("usingDeviceTime"));
   }
   renderTimeline(correctedNow());
+  scheduleNextChimeAlarm();
 }
 
 async function fetchServerTimeSample(sampleIndex) {
@@ -470,6 +476,7 @@ async function syncNetworkTime() {
     const accuracySeconds = Math.max(0.6, Math.ceil(state.syncAccuracyMs / 100) / 10).toFixed(1);
     renderSyncState("synced", text("synced", { seconds: accuracySeconds }));
     renderTimeline(correctedNow());
+    scheduleNextChimeAlarm();
   } catch {
     renderOfflineTimeSource();
   } finally {
@@ -575,9 +582,31 @@ function renderMonitoringState() {
   el.monitorNote.textContent = text(state.monitoring ? "monitorActiveNote" : "monitorStoppedNote");
 }
 
+function clearNextChimeAlarm() {
+  if (!state.nextChimeTimerId) return;
+  window.clearTimeout(state.nextChimeTimerId);
+  state.nextChimeTimerId = 0;
+}
+
+function scheduleNextChimeAlarm(nowMs = correctedNow()) {
+  clearNextChimeAlarm();
+  if (!state.monitoring) return;
+  const nextEvent = getUpcomingEvent(state.schedule, nowMs, state.activeDays);
+  if (!nextEvent) return;
+  const delayMs = Math.max(0, Math.min(nextEvent.atMs - nowMs, MAX_TIMEOUT_MS));
+  state.nextChimeTimerId = window.setTimeout(() => {
+    state.nextChimeTimerId = 0;
+    const firedAtMs = correctedNow();
+    ringDueEvents(firedAtMs, BACKGROUND_CHIME_GRACE_MS);
+    renderTimeline(firedAtMs);
+    scheduleNextChimeAlarm(firedAtMs);
+  }, delayMs);
+}
+
 async function toggleMonitoring() {
   if (state.monitoring) {
     state.monitoring = false;
+    clearNextChimeAlarm();
     await releaseWakeLock();
     renderMonitoringState();
     renderTimeline(correctedNow());
@@ -588,10 +617,13 @@ async function toggleMonitoring() {
     await unlockAudio();
     state.monitoring = true;
     state.firedEvents.clear();
+    state.lastTickAtMs = correctedNow();
     await requestWakeLock();
     renderMonitoringState();
     renderTimeline(correctedNow());
+    scheduleNextChimeAlarm();
   } catch {
+    clearNextChimeAlarm();
     el.monitorNote.textContent = text("audioStartError");
   }
 }
@@ -600,18 +632,19 @@ function eventDescription(event) {
   return text(event.kind === "start" ? "eventStart" : "eventEnd", { label: localizedPeriodLabel(event.label) });
 }
 
-function ringDueEvents(nowMs) {
+function ringDueEvents(nowMs, dueWindowMs = DUE_WINDOW_MS) {
   if (!state.monitoring) return;
   const { dateKey } = getTokyoParts(nowMs);
   const events = buildEventsForDate(state.schedule, dateKey, state.activeDays);
   events.forEach((event) => {
     const lateness = nowMs - event.atMs;
-    if (lateness < 0 || lateness >= DUE_WINDOW_MS || state.firedEvents.has(event.key)) return;
+    if (lateness < 0 || lateness >= dueWindowMs || state.firedEvents.has(event.key)) return;
     state.firedEvents.add(event.key);
     state.lastChimeMessage = text("chimePlayed", { description: eventDescription(event) });
     state.lastChimeUntil = nowMs + 8000;
     playSchoolChime().catch(() => {
       state.monitoring = false;
+      clearNextChimeAlarm();
       renderMonitoringState();
       el.monitorNote.textContent = text("audioStoppedError");
     });
@@ -675,7 +708,12 @@ function renderTimeline(nowMs) {
 
 function tick() {
   const nowMs = correctedNow();
-  ringDueEvents(nowMs);
+  const elapsedSinceTick = state.lastTickAtMs ? Math.max(0, nowMs - state.lastTickAtMs) : 0;
+  const dueWindowMs = document.visibilityState === "hidden" || elapsedSinceTick > DUE_WINDOW_MS
+    ? BACKGROUND_CHIME_GRACE_MS
+    : DUE_WINDOW_MS;
+  ringDueEvents(nowMs, dueWindowMs);
+  state.lastTickAtMs = nowMs;
   renderTimeline(nowMs);
 }
 
@@ -711,9 +749,22 @@ function bindEvents() {
     });
   });
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState !== "visible") return;
-    if (state.monitoring) requestWakeLock();
+    if (document.visibilityState !== "visible") {
+      if (state.monitoring) scheduleNextChimeAlarm();
+      return;
+    }
+    if (state.monitoring) {
+      requestWakeLock();
+      tick();
+      scheduleNextChimeAlarm();
+    }
     if (Date.now() - state.lastSyncAt > 60 * 1000) syncNetworkTime();
+  });
+  window.addEventListener("pageshow", () => {
+    if (!state.monitoring) return;
+    requestWakeLock();
+    tick();
+    scheduleNextChimeAlarm();
   });
   window.addEventListener("pagehide", releaseWakeLock);
   window.addEventListener("online", syncNetworkTime);
