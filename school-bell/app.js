@@ -316,19 +316,28 @@ function strikeBell(audio, frequency, startTime, volumeScale, decayScale = 1) {
 
 async function playSchoolChime() {
   const audio = await unlockAudio();
+  const beatSeconds = 0.9;
   const notes = [
-    { frequency: 659.25, offset: 0 },
-    { frequency: 523.25, offset: 1.08 },
-    { frequency: 587.33, offset: 2.16 },
-    { frequency: 392, offset: 3.24 },
-    { frequency: 392, offset: 4.82 },
-    { frequency: 587.33, offset: 5.9 },
-    { frequency: 659.25, offset: 6.98 },
-    { frequency: 523.25, offset: 8.06, decayScale: 1.45 },
+    { frequency: 523.25, beat: 0 },
+    { frequency: 659.25, beat: 1 },
+    { frequency: 587.33, beat: 2 },
+    { frequency: 392, beat: 3 },
+    { frequency: 523.25, beat: 6 },
+    { frequency: 587.33, beat: 7 },
+    { frequency: 659.25, beat: 8 },
+    { frequency: 523.25, beat: 9 },
+    { frequency: 659.25, beat: 12 },
+    { frequency: 523.25, beat: 13 },
+    { frequency: 587.33, beat: 14 },
+    { frequency: 392, beat: 15 },
+    { frequency: 392, beat: 18 },
+    { frequency: 587.33, beat: 19 },
+    { frequency: 659.25, beat: 20 },
+    { frequency: 523.25, beat: 21, decayScale: 1.45 },
   ];
   const startTime = audio.currentTime + 0.04;
   const volumeScale = state.volume / 100;
-  notes.forEach((note) => strikeBell(audio, note.frequency, startTime + note.offset, volumeScale, note.decayScale));
+  notes.forEach((note) => strikeBell(audio, note.frequency, startTime + note.beat * beatSeconds, volumeScale, note.decayScale));
   if ("vibrate" in navigator) navigator.vibrate([120, 80, 120]);
   document.body.classList.remove("chime-flash");
   window.requestAnimationFrame(() => document.body.classList.add("chime-flash"));
