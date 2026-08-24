@@ -1,4 +1,4 @@
-const CACHE_NAME = "presentation-timer-v18";
+const CACHE_NAME = "presentation-tools-v19";
 const ASSETS = [
   "./",
   "./index.html",
@@ -9,6 +9,12 @@ const ASSETS = [
   "./assets/icon-180.png",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
+  "./school-bell/",
+  "./school-bell/index.html",
+  "./school-bell/styles.css?v=1",
+  "./school-bell/app.js?v=2",
+  "./school-bell/scheduler-core.js",
+  "./school-bell/manifest.webmanifest",
 ];
 
 self.addEventListener("install", (event) => {
@@ -29,14 +35,17 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
   if (event.request.mode === "navigate") {
+    const requestUrl = new URL(event.request.url);
+    const isSchoolBell = requestUrl.pathname.includes("/school-bell/");
+    const fallbackKey = isSchoolBell ? "./school-bell/index.html" : "./index.html";
     event.respondWith(
       fetch(event.request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put("./index.html", copy));
+          caches.open(CACHE_NAME).then((cache) => cache.put(fallbackKey, copy));
           return response;
         })
-        .catch(() => caches.match(event.request).then((cached) => cached || caches.match("./index.html"))),
+        .catch(() => caches.match(event.request, { ignoreSearch: true }).then((cached) => cached || caches.match(fallbackKey))),
     );
     return;
   }

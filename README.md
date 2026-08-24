@@ -2,6 +2,17 @@
 
 iPhoneとiPadで発表時間と質疑応答の残り時間を大きく表示する、縦向き・横向き対応の静的HTML PWAです。
 
+このリポジトリには、別ページとして学校チャイムツールも含まれます。ネット時刻に同期し、設定した曜日と授業の開始・終了時刻にチャイムを鳴らします。初期時間割は次のとおりです。
+
+- 1限: 8:40〜10:10
+- 2限: 10:30〜12:00
+- 3限: 13:00〜14:30
+- 4限: 14:50〜16:20
+- 5限: 16:40〜18:10
+- 6限: 18:30〜20:00
+
+時間割、使用曜日、音量は学校チャイム画面で変更でき、端末内に自動保存されます。
+
 新規利用者には英語で表示され、右上の言語ボタンから日本語へ切り替えられます。公開URLへのリンクを研究室や学会のWebサイトへ掲載して利用できます。
 
 ## iPhone・iPadでアプリのように使う方法
@@ -29,6 +40,14 @@ https://<ユーザー名>.github.io/<リポジトリ名>/
 
 公開URLをiPadのSafariで開き、「ホーム画面に追加」してください。
 
+学校チャイムの公開URL:
+
+```text
+https://m-kondo26.github.io/presentation-qa-timer/school-bell/
+```
+
+研究室Webからは、このURLへ直接リンクしてください。
+
 ## ファイル構成
 
 ```text
@@ -37,6 +56,12 @@ styles.css
 app.js
 manifest.webmanifest
 service-worker.js
+school-bell/
+  index.html
+  styles.css
+  app.js
+  scheduler-core.js
+  manifest.webmanifest
 assets/
   icon.svg
   icon-180.png

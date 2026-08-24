@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4f1e8" />
+    <meta name="description" content="ネット時刻に同期し、設定した授業の開始・終了時刻に学校チャイムを鳴らすiPad対応Webツールです。" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="学校チャイム" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <title>学校チャイム</title>
+    <link rel="icon" type="image/svg+xml" href="../assets/icon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="../assets/icon-180.png" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css?v=1" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="back-link" href="../index.html">← 発表タイマー</a>
+      <button id="syncButton" class="sync-pill" type="button" aria-label="ネット時刻を再同期">
+        <span id="syncDot" class="sync-dot" aria-hidden="true"></span>
+        <span id="syncLabel">ネット時刻を同期中</span>
+      </button>
+    </header>
+
+    <main class="page-shell">
+      <section class="hero" aria-labelledby="pageTitle">
+        <div class="hero-copy">
+          <p class="eyebrow">SCHOOL BELL</p>
+          <h1 id="pageTitle">学校チャイム</h1>
+          <p>設定した授業の開始・終了時刻に、ネット時刻を基準としてチャイムを鳴らします。</p>
+        </div>
+
+        <div class="clock-card" aria-live="polite">
+          <p id="dateDisplay" class="date-display">----年--月--日（-）</p>
+          <time id="clockDisplay" class="clock-display" datetime="">--:--:--</time>
+          <p id="periodStatus" class="period-status">時刻を確認しています</p>
+        </div>
+
+        <div class="next-card">
+          <div>
+            <p class="next-label">次のチャイム</p>
+            <h2 id="nextEventLabel">確認中</h2>
+            <p id="nextEventTime" class="next-time">--:--</p>
+          </div>
+          <div class="countdown-wrap">
+            <span>あと</span>
+            <strong id="countdownDisplay">--:--:--</strong>
+          </div>
+        </div>
+
+        <div class="monitor-controls">
+          <button id="monitorButton" class="primary-button" type="button">監視を開始</button>
+          <button id="testButton" class="secondary-button" type="button">チャイムを試聴</button>
+        </div>
+        <p id="monitorNote" class="monitor-note">iPadの音量を確認し、このページを開いたまま「監視を開始」を押してください。</p>
+      </section>
+
+      <section class="settings-card" aria-labelledby="scheduleTitle">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">SCHEDULE</p>
+            <h2 id="scheduleTitle">時間割</h2>
+          </div>
+          <button id="resetScheduleButton" class="text-button" type="button">初期時間に戻す</button>
+        </div>
+
+        <fieldset class="weekday-fieldset">
+          <legend>チャイムを鳴らす曜日</legend>
+          <div class="weekday-grid">
+            <label><input type="checkbox" name="weekday" value="1" checked /><span>月</span></label>
+            <label><input type="checkbox" name="weekday" value="2" checked /><span>火</span></label>
+            <label><input type="checkbox" name="weekday" value="3" checked /><span>水</span></label>
+            <label><input type="checkbox" name="weekday" value="4" checked /><span>木</span></label>
+            <label><input type="checkbox" name="weekday" value="5" checked /><span>金</span></label>
+            <label><input type="checkbox" name="weekday" value="6" /><span>土</span></label>
+            <label><input type="checkbox" name="weekday" value="0" /><span>日</span></label>
+          </div>
+        </fieldset>
+
+        <div class="schedule-head" aria-hidden="true">
+          <span>使用</span><span>時限</span><span>開始</span><span>終了</span><span></span>
+        </div>
+        <div id="scheduleRows" class="schedule-rows"></div>
+        <p id="scheduleMessage" class="schedule-message" role="status"></p>
+
+        <div class="schedule-actions">
+          <button id="addPeriodButton" class="secondary-button small-button" type="button">＋ 時限を追加</button>
+          <label class="volume-control" for="volumeInput">
+            <span>チャイム音量</span>
+            <input id="volumeInput" type="range" min="10" max="100" step="5" value="70" />
+            <output id="volumeOutput" for="volumeInput">70%</output>
+          </label>
+        </div>
+      </section>
+
+      <aside class="usage-note">
+        <strong>使用上の注意</strong>
+        <p>iPadでは音声の許可に最初のタップが必要です。監視中は画面のスリープをできるだけ防ぎますが、このページを前面に表示したまま、消音設定と本体音量を事前に確認してください。</p>
+      </aside>
+    </main>
+
+    <template id="scheduleRowTemplate">
+      <div class="schedule-row">
+        <label class="enabled-cell">
+          <input class="period-enabled" type="checkbox" />
+          <span class="sr-only">この時限を使用</span>
+        </label>
+        <label>
+          <span class="mobile-label">時限</span>
+          <input class="period-label" type="text" maxlength="12" autocomplete="off" />
+        </label>
+        <label>
+          <span class="mobile-label">開始</span>
+          <input class="period-start" type="time" step="60" />
+        </label>
+        <label>
+          <span class="mobile-label">終了</span>
+          <input class="period-end" type="time" step="60" />
+        </label>
+        <button class="delete-period-button" type="button" aria-label="この時限を削除">削除</button>
+        <p class="row-error" role="status"></p>
+      </div>
+    </template>
+
+    <script type="module" src="./app.js?v=2"></script>
+  </body>
+</html>
