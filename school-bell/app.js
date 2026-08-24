@@ -21,6 +21,7 @@ const SYNC_INTERVAL_MS = 5 * 60 * 1000;
 const DUE_WINDOW_MS = 5000;
 const BACKGROUND_CHIME_GRACE_MS = 90 * 1000;
 const MAX_TIMEOUT_MS = 2_147_000_000;
+const CHIME_AUDIO_SESSION_MS = 23_500;
 
 const translations = {
   ja: {
@@ -49,7 +50,7 @@ const translations = {
     addPeriod: "＋ 時限を追加",
     chimeVolume: "チャイム音量",
     usageTitle: "使用上の注意",
-    usageDescription: "iPadでは音声の許可に最初のタップが必要です。別タブや最小化中の遅延を補う監視を行いますが、別アプリ表示中や画面消灯中はiPadOSがWebページを停止することがあります。確実に鳴らす場合はページを前面表示し、消音設定と本体音量を確認してください。",
+    usageDescription: "iPadでは音声の許可に最初のタップが必要です。対応するSafari・Chromeでは、チャイムの間だけほかのアプリの音声を抑えるようOSへ要求し、終了後に解除します（音楽が一時停止する場合があります）。Chromeなど音声セッション機能がないブラウザーでは、チャイムをメディア音声として再生して聞こえやすくします。別アプリ表示中や画面消灯中はOSがWebページを停止することがあるため、確実に鳴らす場合はページを前面表示し、消音設定と本体音量を確認してください。",
     labelRequired: "名称を入力してください",
     timeRequired: "時刻を入力してください",
     startBeforeEnd: "開始は終了より前にしてください",
@@ -110,7 +111,7 @@ const translations = {
     addPeriod: "+ Add Period",
     chimeVolume: "Chime Volume",
     usageTitle: "Before You Use It",
-    usageDescription: "On iPad, audio requires an initial tap. Extra checks recover short delays in background tabs and minimized windows, but iPadOS may stop a web page while another app is shown or the screen is off. For reliable ringing, keep this page in the foreground and check Silent Mode and device volume.",
+    usageDescription: "On iPad, audio requires an initial tap. In supported Safari and Chrome versions, the tool asks the OS to prioritize the chime over other apps only while it plays, then releases that priority (music may pause temporarily). In browsers without Audio Session support, including Chrome on some platforms, the chime plays as media audio for better audibility. The OS may still stop a hidden web page, so keep it in the foreground for reliable ringing and check Silent Mode and device volume.",
     labelRequired: "Enter a period name",
     timeRequired: "Enter both times",
     startBeforeEnd: "Start time must be earlier than end time",
@@ -165,6 +166,8 @@ const state = {
   lastTickAtMs: 0,
   wakeLock: null,
   audioContext: null,
+  audioSessionRestoreTimerId: 0,
+  previousAudioSessionType: "auto",
   firedEvents: new Set(),
   lastChimeMessage: "",
   lastChimeUntil: 0,
@@ -184,6 +187,7 @@ const el = {
   countdownDisplay: document.getElementById("countdownDisplay"),
   monitorButton: document.getElementById("monitorButton"),
   testButton: document.getElementById("testButton"),
+  chimeAudio: document.getElementById("chimeAudio"),
   monitorNote: document.getElementById("monitorNote"),
   scheduleRows: document.getElementById("scheduleRows"),
   scheduleMessage: document.getElementById("scheduleMessage"),
@@ -415,6 +419,7 @@ function renderActiveDays() {
 function renderVolume() {
   el.volumeInput.value = String(state.volume);
   el.volumeOutput.textContent = `${state.volume}%`;
+  if (el.chimeAudio) el.chimeAudio.volume = state.volume / 100;
 }
 
 function renderSyncState(status, message) {
@@ -528,8 +533,83 @@ function strikeBell(audio, frequency, startTime, volumeScale, decayScale = 1) {
   });
 }
 
+function restoreChimeAudioSession() {
+  if (state.audioSessionRestoreTimerId) {
+    window.clearTimeout(state.audioSessionRestoreTimerId);
+    state.audioSessionRestoreTimerId = 0;
+  }
+  if (!("audioSession" in navigator)) return;
+  try {
+    navigator.audioSession.type = state.previousAudioSessionType || "auto";
+  } catch {
+    // Unsupported browsers continue with their default audio handling.
+  }
+}
+
+function beginChimeAudioSession() {
+  if (!("audioSession" in navigator)) return false;
+  try {
+    if (!state.audioSessionRestoreTimerId) {
+      state.previousAudioSessionType = navigator.audioSession.type || "auto";
+    } else {
+      window.clearTimeout(state.audioSessionRestoreTimerId);
+    }
+    navigator.audioSession.type = "transient-solo";
+    state.audioSessionRestoreTimerId = window.setTimeout(restoreChimeAudioSession, CHIME_AUDIO_SESSION_MS);
+    return true;
+  } catch {
+    state.audioSessionRestoreTimerId = 0;
+    return false;
+  }
+}
+
+function canPlayChimeMedia() {
+  return Boolean(el.chimeAudio?.canPlayType?.("audio/wav"));
+}
+
+function primeChimeMedia() {
+  if (!canPlayChimeMedia()) return;
+  try {
+    el.chimeAudio.currentTime = 0;
+    const playPromise = el.chimeAudio.play();
+    el.chimeAudio.pause();
+    el.chimeAudio.currentTime = 0;
+    playPromise?.catch(() => {});
+  } catch {
+    // Web Audio remains available as the fallback.
+  }
+}
+
+async function playChimeMedia() {
+  if (!canPlayChimeMedia()) throw new Error("Chime media is unavailable");
+  el.chimeAudio.pause();
+  el.chimeAudio.currentTime = 0;
+  el.chimeAudio.volume = state.volume / 100;
+  await el.chimeAudio.play();
+}
+
+function signalChimeFeedback() {
+  if ("vibrate" in navigator) navigator.vibrate([120, 80, 120]);
+  document.body.classList.remove("chime-flash");
+  window.requestAnimationFrame(() => document.body.classList.add("chime-flash"));
+}
+
 async function playSchoolChime() {
-  const audio = await unlockAudio();
+  const hasPrioritySession = beginChimeAudioSession();
+  try {
+    await playChimeMedia();
+    signalChimeFeedback();
+    return;
+  } catch {
+    // Chrome and other browsers fall back to Web Audio if media playback fails.
+  }
+  let audio;
+  try {
+    audio = await unlockAudio();
+  } catch (error) {
+    if (hasPrioritySession) restoreChimeAudioSession();
+    throw error;
+  }
   const beatSeconds = 0.9;
   const notes = [
     { frequency: 523.25, beat: 0 },
@@ -552,9 +632,7 @@ async function playSchoolChime() {
   const startTime = audio.currentTime + 0.04;
   const volumeScale = state.volume / 100;
   notes.forEach((note) => strikeBell(audio, note.frequency, startTime + note.beat * beatSeconds, volumeScale, note.decayScale));
-  if ("vibrate" in navigator) navigator.vibrate([120, 80, 120]);
-  document.body.classList.remove("chime-flash");
-  window.requestAnimationFrame(() => document.body.classList.add("chime-flash"));
+  signalChimeFeedback();
 }
 
 async function requestWakeLock() {
@@ -614,6 +692,7 @@ async function toggleMonitoring() {
   }
 
   try {
+    primeChimeMedia();
     await unlockAudio();
     state.monitoring = true;
     state.firedEvents.clear();
