@@ -97,12 +97,21 @@ export function eventEpoch(dateKey, time) {
   return Date.parse(`${dateKey}T${time}:00+09:00`);
 }
 
-export function validatePeriod(period) {
+export function getPeriodValidationCode(period) {
   if (!period?.enabled) return "";
-  if (!period.label.trim()) return "名称を入力してください";
-  if (!isValidTime(period.start) || !isValidTime(period.end)) return "時刻を入力してください";
-  if (timeToMinutes(period.start) >= timeToMinutes(period.end)) return "開始は終了より前にしてください";
+  if (!period.label.trim()) return "labelRequired";
+  if (!isValidTime(period.start) || !isValidTime(period.end)) return "timeRequired";
+  if (timeToMinutes(period.start) >= timeToMinutes(period.end)) return "startBeforeEnd";
   return "";
+}
+
+export function validatePeriod(period) {
+  const messages = {
+    labelRequired: "名称を入力してください",
+    timeRequired: "時刻を入力してください",
+    startBeforeEnd: "開始は終了より前にしてください",
+  };
+  return messages[getPeriodValidationCode(period)] || "";
 }
 
 export function buildEventsForDate(schedule, dateKey, activeDays) {

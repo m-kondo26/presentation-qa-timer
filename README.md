@@ -43,7 +43,8 @@ https://<ユーザー名>.github.io/<リポジトリ名>/
 学校チャイムの公開URL:
 
 ```text
-https://m-kondo26.github.io/presentation-qa-timer/school-bell/
+日本語: https://m-kondo26.github.io/presentation-qa-timer/school-bell/?lang=ja
+English: https://m-kondo26.github.io/presentation-qa-timer/school-bell/?lang=en
 ```
 
 研究室Webからは、このURLへ直接リンクしてください。
@@ -62,6 +63,7 @@ school-bell/
   app.js
   scheduler-core.js
   manifest.webmanifest
+  manifest-en.webmanifest
 assets/
   icon.svg
   icon-180.png

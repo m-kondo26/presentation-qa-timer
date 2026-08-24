@@ -1,4 +1,4 @@
-const CACHE_NAME = "presentation-tools-v20";
+const CACHE_NAME = "presentation-tools-v21";
 const ASSETS = [
   "./",
   "./index.html",
@@ -11,10 +11,11 @@ const ASSETS = [
   "./assets/icon-512.png",
   "./school-bell/",
   "./school-bell/index.html",
-  "./school-bell/styles.css?v=1",
-  "./school-bell/app.js?v=3",
+  "./school-bell/styles.css?v=2",
+  "./school-bell/app.js?v=4",
   "./school-bell/scheduler-core.js",
   "./school-bell/manifest.webmanifest",
+  "./school-bell/manifest-en.webmanifest",
 ];
 
 self.addEventListener("install", (event) => {

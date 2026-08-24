@@ -5,6 +5,7 @@ import {
   buildEventsForDate,
   formatCountdown,
   getCurrentPeriod,
+  getPeriodValidationCode,
   getTokyoParts,
   getUpcomingEvent,
   normalizeSchedule,
@@ -55,6 +56,7 @@ assert.equal(tokyoMidnight.dateKey, "2026-08-24");
 assert.equal(tokyoMidnight.clock, "00:00:01");
 
 assert.equal(validatePeriod({ label: "7限", start: "21:00", end: "20:00", enabled: true }), "開始は終了より前にしてください");
+assert.equal(getPeriodValidationCode({ label: "Period 7", start: "21:00", end: "20:00", enabled: true }), "startBeforeEnd");
 assert.equal(validatePeriod({ label: "7限", start: "20:20", end: "21:50", enabled: true }), "");
 assert.equal(formatCountdown(3_661_000), "01:01:01");
 
