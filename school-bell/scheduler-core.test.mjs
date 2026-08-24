@@ -5,6 +5,7 @@ import {
   buildEventsForDate,
   formatCountdown,
   getCurrentPeriod,
+  getEventsBetween,
   getPeriodValidationCode,
   getTokyoParts,
   getUpcomingEvent,
@@ -41,6 +42,26 @@ assert.deepEqual(
   ],
 );
 assert.equal(buildEventsForDate(schedule, "2026-08-23", DEFAULT_ACTIVE_DAYS).length, 0);
+
+const mondayMorning = Date.parse("2026-08-24T08:39:00+09:00");
+const tuesdayEvening = Date.parse("2026-08-25T20:01:00+09:00");
+const twoDayEvents = getEventsBetween(schedule, mondayMorning, tuesdayEvening, DEFAULT_ACTIVE_DAYS);
+assert.equal(twoDayEvents.length, 24);
+assert.equal(twoDayEvents[0].key, "2026-08-24|period-1|start|08:40");
+assert.equal(twoDayEvents.at(-1).key, "2026-08-25|period-6|end|20:00");
+
+const simultaneousSchedule = [
+  { id: "a", label: "A", start: "08:40", end: "09:00", enabled: true },
+  { id: "b", label: "B", start: "08:40", end: "09:10", enabled: true },
+];
+const simultaneousEvents = getEventsBetween(
+  simultaneousSchedule,
+  mondayMorning,
+  Date.parse("2026-08-24T08:41:00+09:00"),
+  DEFAULT_ACTIVE_DAYS,
+);
+assert.equal(simultaneousEvents.length, 2);
+assert.deepEqual(simultaneousEvents.map((event) => event.periodId), ["a", "b"]);
 
 const duringFirstPeriod = Date.parse("2026-08-24T09:15:00+09:00");
 assert.equal(getCurrentPeriod(schedule, duringFirstPeriod, DEFAULT_ACTIVE_DAYS)?.label, "1限");

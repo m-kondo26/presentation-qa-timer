@@ -5,6 +5,7 @@ import {
   buildEventsForDate,
   formatCountdown,
   getCurrentPeriod,
+  getEventsBetween,
   getPeriodValidationCode,
   getTokyoParts,
   getUpcomingEvent,
@@ -22,6 +23,7 @@ const DUE_WINDOW_MS = 5000;
 const BACKGROUND_CHIME_GRACE_MS = 90 * 1000;
 const MAX_TIMEOUT_MS = 2_147_000_000;
 const CHIME_AUDIO_SESSION_MS = 23_500;
+const AUDIO_SCHEDULE_HORIZON_MS = 36 * 60 * 60 * 1000;
 
 const translations = {
   ja: {
@@ -50,7 +52,7 @@ const translations = {
     addPeriod: "＋ 時限を追加",
     chimeVolume: "チャイム音量",
     usageTitle: "使用上の注意",
-    usageDescription: "iPadでは音声の許可に最初のタップが必要です。対応するSafari・Chromeでは、チャイムの間だけほかのアプリの音声を抑えるようOSへ要求し、終了後に解除します（音楽が一時停止する場合があります）。Chromeなど音声セッション機能がないブラウザーでは、チャイムをメディア音声として再生して聞こえやすくします。別アプリ表示中や画面消灯中はOSがWebページを停止することがあるため、確実に鳴らす場合はページを前面表示し、消音設定と本体音量を確認してください。",
+    usageDescription: "iPadでは音声の許可に最初のタップが必要です。対応するSafari・Chromeでは、チャイムの間だけほかのアプリの音声を抑えるようOSへ要求し、終了後に解除します（音楽が一時停止する場合があります）。Chromeでは次回以降のチャイムを音声時計へ先行予約し、別タブ表示中のタイマー遅延を避けます。別アプリ表示中や画面消灯中はOSがWebページ全体を停止することがあるため、確実に鳴らす場合はページを前面表示し、消音設定と本体音量を確認してください。",
     labelRequired: "名称を入力してください",
     timeRequired: "時刻を入力してください",
     startBeforeEnd: "開始は終了より前にしてください",
@@ -111,7 +113,7 @@ const translations = {
     addPeriod: "+ Add Period",
     chimeVolume: "Chime Volume",
     usageTitle: "Before You Use It",
-    usageDescription: "On iPad, audio requires an initial tap. In supported Safari and Chrome versions, the tool asks the OS to prioritize the chime over other apps only while it plays, then releases that priority (music may pause temporarily). In browsers without Audio Session support, including Chrome on some platforms, the chime plays as media audio for better audibility. The OS may still stop a hidden web page, so keep it in the foreground for reliable ringing and check Silent Mode and device volume.",
+    usageDescription: "On iPad, audio requires an initial tap. In supported Safari and Chrome versions, the tool asks the OS to prioritize the chime over other apps only while it plays, then releases that priority (music may pause temporarily). In Chrome, upcoming chimes are also scheduled on the audio clock to avoid background-tab timer delays. The OS may still stop the entire page while another app is shown or the screen is off, so keep it in the foreground for reliable ringing and check Silent Mode and device volume.",
     labelRequired: "Enter a period name",
     timeRequired: "Enter both times",
     startBeforeEnd: "Start time must be earlier than end time",
@@ -168,6 +170,9 @@ const state = {
   audioContext: null,
   audioSessionRestoreTimerId: 0,
   previousAudioSessionType: "auto",
+  chimeBuffer: null,
+  chimeBufferPromise: null,
+  scheduledAudioChimes: new Map(),
   firedEvents: new Set(),
   lastChimeMessage: "",
   lastChimeUntil: 0,
@@ -251,6 +256,7 @@ function saveSettings() {
     }),
   );
   scheduleNextChimeAlarm();
+  scheduleBackgroundAudioChimes();
 }
 
 function renderLanguage() {
@@ -438,6 +444,7 @@ function renderOfflineTimeSource() {
   }
   renderTimeline(correctedNow());
   scheduleNextChimeAlarm();
+  scheduleBackgroundAudioChimes();
 }
 
 async function fetchServerTimeSample(sampleIndex) {
@@ -482,6 +489,7 @@ async function syncNetworkTime() {
     renderSyncState("synced", text("synced", { seconds: accuracySeconds }));
     renderTimeline(correctedNow());
     scheduleNextChimeAlarm();
+    scheduleBackgroundAudioChimes();
   } catch {
     renderOfflineTimeSource();
   } finally {
@@ -594,6 +602,86 @@ function signalChimeFeedback() {
   window.requestAnimationFrame(() => document.body.classList.add("chime-flash"));
 }
 
+async function prepareChimeBuffer(audio) {
+  if (state.chimeBuffer) return state.chimeBuffer;
+  if (state.chimeBufferPromise) return state.chimeBufferPromise;
+  state.chimeBufferPromise = fetch(new URL("./chime.wav", window.location.href), { cache: "force-cache" })
+    .then((response) => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      return response.arrayBuffer();
+    })
+    .then((arrayBuffer) => audio.decodeAudioData(arrayBuffer))
+    .then((buffer) => {
+      state.chimeBuffer = buffer;
+      return buffer;
+    })
+    .catch(() => null)
+    .finally(() => {
+      state.chimeBufferPromise = null;
+    });
+  return state.chimeBufferPromise;
+}
+
+function clearScheduledAudioChimes(preservePlaying = false) {
+  const audio = state.audioContext;
+  const currentTime = audio?.currentTime ?? 0;
+  const preserved = new Map();
+  state.scheduledAudioChimes.forEach((entry, key) => {
+    const isPlaying = currentTime >= entry.startAt && currentTime < entry.endAt;
+    if (preservePlaying && isPlaying) {
+      preserved.set(key, entry);
+      return;
+    }
+    try {
+      entry.source.stop();
+    } catch {
+      // A completed source cannot be stopped again.
+    }
+    entry.source.disconnect();
+    entry.gain.disconnect();
+  });
+  state.scheduledAudioChimes = preserved;
+}
+
+function scheduleBackgroundAudioChimes(nowMs = correctedNow()) {
+  const audio = state.audioContext;
+  clearScheduledAudioChimes(true);
+  if (!state.monitoring || !state.chimeBuffer || !audio || audio.state !== "running") return;
+  const events = getEventsBetween(
+    state.schedule,
+    nowMs,
+    nowMs + AUDIO_SCHEDULE_HORIZON_MS,
+    state.activeDays,
+  );
+  events.forEach((event) => {
+    if (state.scheduledAudioChimes.has(event.key)) return;
+    const source = audio.createBufferSource();
+    const gain = audio.createGain();
+    const startAt = audio.currentTime + Math.max(0, (event.atMs - nowMs) / 1000);
+    source.buffer = state.chimeBuffer;
+    gain.gain.setValueAtTime(state.volume / 100, audio.currentTime);
+    source.connect(gain);
+    gain.connect(audio.destination);
+    const entry = {
+      source,
+      gain,
+      startAt,
+      endAt: startAt + state.chimeBuffer.duration,
+      ended: false,
+    };
+    source.addEventListener("ended", () => {
+      entry.ended = true;
+    }, { once: true });
+    try {
+      source.start(startAt);
+      state.scheduledAudioChimes.set(event.key, entry);
+    } catch {
+      source.disconnect();
+      gain.disconnect();
+    }
+  });
+}
+
 async function playSchoolChime() {
   const hasPrioritySession = beginChimeAudioSession();
   try {
@@ -685,6 +773,7 @@ async function toggleMonitoring() {
   if (state.monitoring) {
     state.monitoring = false;
     clearNextChimeAlarm();
+    clearScheduledAudioChimes();
     await releaseWakeLock();
     renderMonitoringState();
     renderTimeline(correctedNow());
@@ -693,7 +782,7 @@ async function toggleMonitoring() {
 
   try {
     primeChimeMedia();
-    await unlockAudio();
+    const audio = await unlockAudio();
     state.monitoring = true;
     state.firedEvents.clear();
     state.lastTickAtMs = correctedNow();
@@ -701,8 +790,12 @@ async function toggleMonitoring() {
     renderMonitoringState();
     renderTimeline(correctedNow());
     scheduleNextChimeAlarm();
+    prepareChimeBuffer(audio).then((buffer) => {
+      if (buffer && state.monitoring) scheduleBackgroundAudioChimes();
+    });
   } catch {
     clearNextChimeAlarm();
+    clearScheduledAudioChimes();
     el.monitorNote.textContent = text("audioStartError");
   }
 }
@@ -721,9 +814,15 @@ function ringDueEvents(nowMs, dueWindowMs = DUE_WINDOW_MS) {
     state.firedEvents.add(event.key);
     state.lastChimeMessage = text("chimePlayed", { description: eventDescription(event) });
     state.lastChimeUntil = nowMs + 8000;
+    const scheduledAudio = state.scheduledAudioChimes.get(event.key);
+    if (scheduledAudio && state.audioContext?.state === "running") {
+      signalChimeFeedback();
+      return;
+    }
     playSchoolChime().catch(() => {
       state.monitoring = false;
       clearNextChimeAlarm();
+      clearScheduledAudioChimes();
       renderMonitoringState();
       el.monitorNote.textContent = text("audioStoppedError");
     });
@@ -836,6 +935,7 @@ function bindEvents() {
       requestWakeLock();
       tick();
       scheduleNextChimeAlarm();
+      scheduleBackgroundAudioChimes();
     }
     if (Date.now() - state.lastSyncAt > 60 * 1000) syncNetworkTime();
   });
@@ -844,6 +944,7 @@ function bindEvents() {
     requestWakeLock();
     tick();
     scheduleNextChimeAlarm();
+    scheduleBackgroundAudioChimes();
   });
   window.addEventListener("pagehide", releaseWakeLock);
   window.addEventListener("online", syncNetworkTime);

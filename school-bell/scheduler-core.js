@@ -144,6 +144,22 @@ export function buildEventsForDate(schedule, dateKey, activeDays) {
     .sort((a, b) => a.atMs - b.atMs || a.kind.localeCompare(b.kind));
 }
 
+export function getEventsBetween(schedule, startMs, endMs, activeDays) {
+  if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) return [];
+  const { dateKey } = getTokyoParts(startMs);
+  const dayCount = Math.min(14, Math.ceil((endMs - startMs) / 86_400_000) + 1);
+  const events = [];
+  for (let offset = 0; offset <= dayCount; offset += 1) {
+    const candidateDate = addDaysToDateKey(dateKey, offset);
+    events.push(
+      ...buildEventsForDate(schedule, candidateDate, activeDays).filter(
+        (event) => event.atMs > startMs + 250 && event.atMs <= endMs,
+      ),
+    );
+  }
+  return events.sort((a, b) => a.atMs - b.atMs || a.key.localeCompare(b.key));
+}
+
 export function getUpcomingEvent(schedule, nowMs, activeDays, daysAhead = 8) {
   const { dateKey } = getTokyoParts(nowMs);
   for (let offset = 0; offset <= daysAhead; offset += 1) {
