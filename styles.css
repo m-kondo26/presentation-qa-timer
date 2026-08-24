@@ -127,6 +127,43 @@ select:focus-visible {
   gap: 8px;
 }
 
+
+.rights-banner {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-left: 5px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.rights-banner p {
+  margin: 0;
+}
+
+.rights-banner p + p {
+  margin-top: 3px;
+}
+
+.rights-banner strong,
+.rights-banner a {
+  color: var(--accent-strong);
+  font-weight: 800;
+}
+
+.rights-banner a {
+  text-underline-offset: 3px;
+}
+
+html[lang="ja"] .rights-en,
+html[lang="en"] .rights-ja {
+  display: none;
+}
+
 .sound-settings {
   display: grid;
   grid-template-columns: minmax(180px, 0.8fr) minmax(260px, 1.2fr);
