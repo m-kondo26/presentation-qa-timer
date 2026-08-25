@@ -12,7 +12,7 @@
     <link rel="icon" type="image/svg+xml" href="../assets/icon.svg" />
     <link rel="apple-touch-icon" sizes="180x180" href="../assets/icon-180.png" />
     <link id="manifestLink" rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./styles.css?v=4" />
+    <link rel="stylesheet" href="./styles.css?v=5" />
   </head>
   <body>
     <header class="topbar">
@@ -71,7 +71,7 @@
           <button id="monitorButton" class="primary-button" type="button" data-i18n="startMonitoring">監視を開始</button>
           <button id="testButton" class="secondary-button" type="button" data-i18n="testChime">チャイムを試聴（約22秒）</button>
         </div>
-        <p id="monitorNote" class="monitor-note">iPadの音量を確認し、このページを開いたまま「監視を開始」を押してください。</p>
+        <p id="monitorNote" class="monitor-note" role="status">重要：「監視を開始」を押さない限り、チャイムは鳴りません。別タブ表示やウィンドウ最小化で使う場合も、先に必ず押してください。</p>
       </section>
 
       <section class="settings-card" aria-labelledby="scheduleTitle">
@@ -142,6 +142,6 @@
     </template>
 
     <audio id="chimeAudio" src="./chime.wav" preload="auto" aria-hidden="true" hidden></audio>
-    <script type="module" src="./app.js?v=10"></script>
+    <script type="module" src="./app.js?v=9"></script>
   </body>
 </html>
