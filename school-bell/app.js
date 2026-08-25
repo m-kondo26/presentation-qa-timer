@@ -15,7 +15,7 @@ import {
   normalizeSchedule,
   timeToMinutes,
   validatePeriod,
-} from "./scheduler-core.js";
+} from "./scheduler-core.js?v=2";
 
 const STORAGE_KEY = "school-bell-settings-v1";
 const SYNC_INTERVAL_MS = 5 * 60 * 1000;
