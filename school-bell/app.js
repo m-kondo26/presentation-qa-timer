@@ -461,8 +461,10 @@ async function fetchServerTimeSample(sampleIndex) {
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const dateHeader = response.headers.get("date");
   if (!dateHeader) throw new Error("Date header is unavailable");
-  const ageSeconds = Math.max(0, Number(response.headers.get("age")) || 0);
-  const serverEpochMs = Date.parse(dateHeader) + ageSeconds * 1000 + 500;
+  // GitHub Pages returns a Date header representing the response time even
+  // when its CDN also reports an Age value. Adding Age here would count the
+  // cache age twice and can move the displayed clock several minutes ahead.
+  const serverEpochMs = Date.parse(dateHeader) + 500;
   if (!Number.isFinite(serverEpochMs)) throw new Error("Invalid server date");
   return {
     roundTripMs,
