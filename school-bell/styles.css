@@ -351,6 +351,12 @@ html[lang="en"] .rights-ja {
   box-shadow: 0 8px 20px rgba(183, 28, 28, 0.12);
 }
 
+.monitor-note.background-audio-active::before {
+  content: "●";
+  color: #17855b;
+  margin-right: 0.45rem;
+}
+
 .settings-card {
   margin-top: clamp(38px, 7vw, 76px);
   padding: clamp(22px, 5vw, 46px);

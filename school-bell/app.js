@@ -24,6 +24,8 @@ const BACKGROUND_CHIME_GRACE_MS = 90 * 1000;
 const MAX_TIMEOUT_MS = 2_147_000_000;
 const CHIME_AUDIO_SESSION_MS = 23_500;
 const AUDIO_SCHEDULE_HORIZON_MS = 36 * 60 * 60 * 1000;
+const BACKGROUND_AUDIO_SAMPLE_RATE = 8_000;
+const BACKGROUND_AUDIO_SECONDS = 8;
 
 const translations = {
   ja: {
@@ -43,7 +45,7 @@ const translations = {
     stopMonitoring: "監視を停止",
     testChime: "チャイムを試聴（約22秒）",
     monitorStoppedNote: "重要：「監視を開始」を押さない限り、チャイムは鳴りません。別タブ表示やウィンドウ最小化で使う場合も、先に必ず押してください。",
-    monitorActiveNote: "監視中です。ボタンが「監視を停止」に変わっていれば開始済みです。別タブ・最小化中も可能な範囲で監視しますが、iPadで別アプリを表示中または画面消灯中は、OSの制限により鳴らないことがあります。",
+    monitorActiveNote: "監視中です。iPad用バックグラウンド音声も動作中です（試験機能）。別タブ・Split View・画面消灯中も監視を続けやすくしますが、iPadOSの制限により鳴動を完全には保証できません。",
     scheduleTitle: "時間割",
     resetSchedule: "初期時間に戻す",
     activeWeekdays: "チャイムを鳴らす曜日",
@@ -76,6 +78,8 @@ const translations = {
     audioStartError: "このブラウザーでは音声を開始できませんでした。SafariまたはChromeで開き直してください。",
     audioStoppedError: "音声が停止されました。もう一度「監視を開始」を押してください。",
     audioPlaybackError: "チャイムを再生できませんでした。ブラウザーの音声設定を確認してください。",
+    backgroundAudioActive: "iPad用バックグラウンド音声：動作中（試験機能）",
+    backgroundAudioUnavailable: "監視中です。ただし、このブラウザーではiPad用バックグラウンド音声を開始できませんでした。ページを前面に表示してご利用ください。",
     eventStart: "{label} 開始",
     eventEnd: "{label} 終了",
     chimePlayed: "{description}のチャイムを鳴らしました",
@@ -104,7 +108,7 @@ const translations = {
     stopMonitoring: "Stop Monitoring",
     testChime: "Test Chime (about 22 sec)",
     monitorStoppedNote: "Important: The chime will not ring until you press “Start Monitoring.” Always press it first, including when using another tab or minimizing the window.",
-    monitorActiveNote: "Monitoring is active. If the button says “Stop Monitoring,” setup is complete. Background tabs and minimized windows are monitored when the browser allows it. iPadOS may stop the page while another app is shown or the screen is off.",
+    monitorActiveNote: "Monitoring is active, including experimental iPad background audio. This helps monitoring continue in another tab, Split View, or with the screen off, but iPadOS may still interrupt it.",
     scheduleTitle: "Schedule",
     resetSchedule: "Restore Default Times",
     activeWeekdays: "Days to ring the chime",
@@ -137,6 +141,8 @@ const translations = {
     audioStartError: "Audio could not start in this browser. Reopen the page in Safari or Chrome.",
     audioStoppedError: "Audio was suspended. Tap “Start Monitoring” again.",
     audioPlaybackError: "The chime could not play. Check your browser audio settings.",
+    backgroundAudioActive: "iPad background audio: active (experimental)",
+    backgroundAudioUnavailable: "Monitoring is active, but iPad background audio could not start in this browser. Keep this page in the foreground.",
     eventStart: "{label} starts",
     eventEnd: "{label} ends",
     chimePlayed: "Chime played: {description}",
@@ -170,6 +176,9 @@ const state = {
   audioContext: null,
   audioSessionRestoreTimerId: 0,
   previousAudioSessionType: "auto",
+  backgroundAudio: null,
+  backgroundAudioUrl: "",
+  backgroundAudioActive: false,
   chimeBuffer: null,
   chimeBufferPromise: null,
   scheduledAudioChimes: new Map(),
@@ -506,6 +515,74 @@ function ensureAudioContext() {
   return state.audioContext;
 }
 
+function createBackgroundAudioUrl() {
+  if (state.backgroundAudioUrl) return state.backgroundAudioUrl;
+  const sampleCount = BACKGROUND_AUDIO_SAMPLE_RATE * BACKGROUND_AUDIO_SECONDS;
+  const buffer = new ArrayBuffer(44 + sampleCount * 2);
+  const view = new DataView(buffer);
+  const writeText = (offset, value) => {
+    for (let index = 0; index < value.length; index += 1) view.setUint8(offset + index, value.charCodeAt(index));
+  };
+  writeText(0, "RIFF");
+  view.setUint32(4, 36 + sampleCount * 2, true);
+  writeText(8, "WAVE");
+  writeText(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, BACKGROUND_AUDIO_SAMPLE_RATE, true);
+  view.setUint32(28, BACKGROUND_AUDIO_SAMPLE_RATE * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeText(36, "data");
+  view.setUint32(40, sampleCount * 2, true);
+  // A non-zero signal is less likely to be optimized away by iPadOS. At about
+  // -84 dBFS it is effectively inaudible through normal device speakers.
+  for (let index = 0; index < sampleCount; index += 1) {
+    view.setInt16(44 + index * 2, index % 2 === 0 ? 2 : -2, true);
+  }
+  state.backgroundAudioUrl = URL.createObjectURL(new Blob([buffer], { type: "audio/wav" }));
+  return state.backgroundAudioUrl;
+}
+
+async function startBackgroundAudio() {
+  if (!state.backgroundAudio) {
+    const audio = new Audio();
+    audio.loop = true;
+    audio.preload = "auto";
+    audio.playsInline = true;
+    audio.setAttribute("playsinline", "");
+    audio.src = createBackgroundAudioUrl();
+    state.backgroundAudio = audio;
+  }
+  if ("audioSession" in navigator) {
+    try {
+      navigator.audioSession.type = "playback";
+    } catch {
+      // Older iPadOS versions can still use the looping media element.
+    }
+  }
+  await state.backgroundAudio.play();
+  state.backgroundAudioActive = !state.backgroundAudio.paused;
+  return state.backgroundAudioActive;
+}
+
+function stopBackgroundAudio() {
+  if (state.backgroundAudio) {
+    state.backgroundAudio.pause();
+    state.backgroundAudio.currentTime = 0;
+  }
+  state.backgroundAudioActive = false;
+  restoreChimeAudioSession();
+  if ("audioSession" in navigator) {
+    try {
+      navigator.audioSession.type = "auto";
+    } catch {
+      // Unsupported browsers keep their default audio session.
+    }
+  }
+}
+
 async function unlockAudio() {
   const audio = ensureAudioContext();
   if (!audio) throw new Error("Web Audio API is unavailable");
@@ -748,6 +825,7 @@ function renderMonitoringState() {
   el.monitorButton.textContent = text(state.monitoring ? "stopMonitoring" : "startMonitoring");
   el.monitorButton.classList.toggle("active", state.monitoring);
   el.monitorNote.textContent = text(state.monitoring ? "monitorActiveNote" : "monitorStoppedNote");
+  el.monitorNote.classList.toggle("background-audio-active", state.monitoring && state.backgroundAudioActive);
 }
 
 function clearNextChimeAlarm() {
@@ -776,6 +854,7 @@ async function toggleMonitoring() {
     state.monitoring = false;
     clearNextChimeAlarm();
     clearScheduledAudioChimes();
+    stopBackgroundAudio();
     await releaseWakeLock();
     renderMonitoringState();
     renderTimeline(correctedNow());
@@ -785,11 +864,18 @@ async function toggleMonitoring() {
   try {
     primeChimeMedia();
     const audio = await unlockAudio();
+    let backgroundAudioStarted = false;
+    try {
+      backgroundAudioStarted = await startBackgroundAudio();
+    } catch {
+      state.backgroundAudioActive = false;
+    }
     state.monitoring = true;
     state.firedEvents.clear();
     state.lastTickAtMs = correctedNow();
     await requestWakeLock();
     renderMonitoringState();
+    if (!backgroundAudioStarted) el.monitorNote.textContent = text("backgroundAudioUnavailable");
     renderTimeline(correctedNow());
     scheduleNextChimeAlarm();
     prepareChimeBuffer(audio).then((buffer) => {
@@ -825,6 +911,7 @@ function ringDueEvents(nowMs, dueWindowMs = DUE_WINDOW_MS) {
       state.monitoring = false;
       clearNextChimeAlarm();
       clearScheduledAudioChimes();
+      stopBackgroundAudio();
       renderMonitoringState();
       el.monitorNote.textContent = text("audioStoppedError");
     });

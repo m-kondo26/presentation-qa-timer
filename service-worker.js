@@ -1,4 +1,4 @@
-const CACHE_NAME = "presentation-tools-v28";
+const CACHE_NAME = "presentation-tools-v29";
 const ASSETS = [
   "./",
   "./index.html",
@@ -11,8 +11,8 @@ const ASSETS = [
   "./assets/icon-512.png",
   "./school-bell/",
   "./school-bell/index.html",
-  "./school-bell/styles.css?v=6",
-  "./school-bell/app.js?v=12",
+  "./school-bell/styles.css?v=7",
+  "./school-bell/app.js?v=13",
   "./school-bell/chime.wav",
   "./school-bell/scheduler-core.js?v=2",
   "./school-bell/manifest.webmanifest",
