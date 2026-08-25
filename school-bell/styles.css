@@ -340,14 +340,15 @@ html[lang="en"] .rights-ja {
 .monitor-note {
   margin: -8px 0 0;
   padding: 14px 16px;
-  border: 1px solid rgba(201, 132, 16, 0.5);
-  border-left: 5px solid var(--amber);
+  border: 2px solid #c62828;
+  border-left: 7px solid #b71c1c;
   border-radius: 14px;
-  background: #fff7df;
-  color: #654300;
-  font-size: 0.95rem;
-  font-weight: 800;
+  background: #ffebee;
+  color: #b71c1c;
+  font-size: 1rem;
+  font-weight: 900;
   line-height: 1.65;
+  box-shadow: 0 8px 20px rgba(183, 28, 28, 0.12);
 }
 
 .settings-card {
