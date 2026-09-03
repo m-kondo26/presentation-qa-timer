@@ -33,7 +33,8 @@ body {
     var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -84,7 +85,8 @@ select:focus-visible {
 .app-shell {
   min-height: 100dvh;
   display: grid;
-  place-items: center;
+  align-items: safe center;
+  justify-items: center;
   padding: max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
 }
 
