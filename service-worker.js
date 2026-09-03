@@ -1,8 +1,8 @@
-const CACHE_NAME = "presentation-tools-v29";
+const CACHE_NAME = "presentation-tools-v30";
 const ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=18",
+  "./styles.css?v=20",
   "./app.js?v=18",
   "./manifest.webmanifest",
   "./assets/icon.svg",
